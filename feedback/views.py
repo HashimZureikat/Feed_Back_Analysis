@@ -17,6 +17,10 @@ def authenticate_client():
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
 
+
+def home(request):
+    return render(request, 'home.html')
+
 def home(request):
     return render(request, 'home.html')
 
