@@ -18,8 +18,7 @@ def authenticate_client():
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
 
 
-def home(request):
-    return render(request, 'home.html')
+
 
 def home(request):
     return render(request, 'home.html')
