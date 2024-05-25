@@ -4,6 +4,8 @@ $(document).ready(function() {
         var feedbackText = $('textarea[name="feedback"]').val();
         var actionUrl = $(this).data('action-url');
 
+        console.log("Submitting feedback text:", feedbackText); // Debugging
+
         $.ajax({
             url: actionUrl,
             method: 'POST',
@@ -12,7 +14,13 @@ $(document).ready(function() {
                 feedback: feedbackText
             },
             success: function(response) {
+                console.log("AJAX response received:", response); // Debugging
+
                 $('#results').html('');
+                $('#gif-positive').hide();
+                $('#gif-neutral').hide();
+                $('#gif-negative').hide();
+
                 if (response.results && response.results.length > 0) {
                     response.results.forEach(function(result) {
                         $('#results').append('<h3>Overall Sentiment: ' + result.sentiment + '</h3>');
@@ -33,13 +41,29 @@ $(document).ready(function() {
                                 });
                             });
                         }
+
+                        // Show the appropriate GIF based on sentiment
+                        if (result.sentiment === 'positive') {
+                            console.log("Displaying positive GIF"); // Debugging
+                            $('#gif-positive').show();
+                        } else if (result.sentiment === 'neutral') {
+                            console.log("Displaying neutral GIF"); // Debugging
+                            $('#gif-neutral').show();
+                        } else if (result.sentiment === 'negative') {
+                            console.log("Displaying negative GIF"); // Debugging
+                            $('#gif-negative').show();
+                        }
                     });
                 } else {
                     $('#results').append('<p>No detailed sentiment data available.</p>');
                 }
             },
             error: function() {
+                console.log("AJAX error"); // Debugging
                 $('#results').html('<p>An error occurred while processing your feedback.</p>');
+                $('#gif-positive').hide();
+                $('#gif-neutral').hide();
+                $('#gif-negative').hide();
             }
         });
     });

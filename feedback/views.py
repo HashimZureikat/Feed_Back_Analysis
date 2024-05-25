@@ -7,7 +7,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Helper function to authenticate the Azure Text Analytics client
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
     endpoint = settings.AZURE_SENTIMENT_ENDPOINT
@@ -17,7 +16,6 @@ def authenticate_client():
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
 
-# New function to extract key phrases
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
     key_phrases_results = []
@@ -50,12 +48,26 @@ def analyze_feedback(request):
                     logger.error("Document processing error: %s", doc.error)
                     continue
 
+                positive_score = doc.confidence_scores.positive
+                neutral_score = doc.confidence_scores.neutral
+                negative_score = doc.confidence_scores.negative
+
+                # Adjusting threshold for neutral sentiment
+                if neutral_score >= 0.02:
+                    overall_sentiment = 'neutral'
+                elif positive_score >= 0.5:
+                    overall_sentiment = 'positive'
+                elif negative_score >= 0.5:
+                    overall_sentiment = 'negative'
+                else:
+                    overall_sentiment = 'mixed'
+
                 doc_results = {
-                    'sentiment': doc.sentiment,
+                    'sentiment': overall_sentiment,
                     'overall_scores': {
-                        'positive': doc.confidence_scores.positive,
-                        'neutral': doc.confidence_scores.neutral,
-                        'negative': doc.confidence_scores.negative
+                        'positive': positive_score,
+                        'neutral': neutral_score,
+                        'negative': negative_score
                     },
                     'opinions': [],
                     'key_phrases': key_phrases_results[0].get("key_phrases", [])
