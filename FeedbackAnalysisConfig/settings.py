@@ -1,7 +1,3 @@
-"""
-Django settings for FeedbackAnalysis project.
-"""
-
 import os
 from pathlib import Path
 
@@ -36,7 +32,7 @@ ROOT_URLCONF = 'FeedbackAnalysisConfig.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Adjust if your templates are elsewhere
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -65,8 +61,8 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static',]
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Azure Text Analytics Settings
-AZURE_SENTIMENT_ENDPOINT = os.getenv('AZURE_SENTIMENT_ENDPOINT', "https://your-resource-name.cognitiveservices.azure.com/")
-AZURE_SUBSCRIPTION_KEY = os.getenv('AZURE_SUBSCRIPTION_KEY', "your_cognitive_services_key")
+AZURE_SENTIMENT_ENDPOINT = "https://ca-la.cognitiveservices.azure.com/"
+AZURE_SUBSCRIPTION_KEY = "71cd915ca08d48218e3479c96690d2e6"

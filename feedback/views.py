@@ -2,23 +2,32 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
-import os
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Helper function to authenticate the Azure Text Analytics client
 def authenticate_client():
-    key = os.getenv('AZURE_SUBSCRIPTION_KEY')
-    endpoint = os.getenv('AZURE_SENTIMENT_ENDPOINT')
+    key = settings.AZURE_SUBSCRIPTION_KEY
+    endpoint = settings.AZURE_SENTIMENT_ENDPOINT
     if not key or not endpoint:
         logger.error("Azure API key or endpoint is not set.")
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
 
-
-
+# New function to extract key phrases
+def extract_key_phrases(client, documents):
+    response = client.extract_key_phrases(documents=documents)
+    key_phrases_results = []
+    for doc in response:
+        if doc.is_error:
+            logger.error("Key phrase extraction error: %s", doc.error)
+            key_phrases_results.append({"error": doc.error})
+        else:
+            key_phrases_results.append({"key_phrases": doc.key_phrases})
+    return key_phrases_results
 
 def home(request):
     return render(request, 'home.html')
@@ -32,12 +41,14 @@ def analyze_feedback(request):
         client = authenticate_client()
 
         try:
-            response = client.analyze_sentiment(documents=[feedback_text], show_opinion_mining=True)
+            sentiment_response = client.analyze_sentiment(documents=[feedback_text], show_opinion_mining=True)
+            key_phrases_results = extract_key_phrases(client, [feedback_text])
+
             results = []
-            for doc in response:
+            for doc in sentiment_response:
                 if doc.is_error:
                     logger.error("Document processing error: %s", doc.error)
-                    continue  # Skip processing for documents that returned an error
+                    continue
 
                 doc_results = {
                     'sentiment': doc.sentiment,
@@ -46,7 +57,8 @@ def analyze_feedback(request):
                         'neutral': doc.confidence_scores.neutral,
                         'negative': doc.confidence_scores.negative
                     },
-                    'opinions': []
+                    'opinions': [],
+                    'key_phrases': key_phrases_results[0].get("key_phrases", [])
                 }
 
                 for sentence in doc.sentences:

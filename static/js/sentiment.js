@@ -17,6 +17,14 @@ $(document).ready(function() {
                     response.results.forEach(function(result) {
                         $('#results').append('<h3>Overall Sentiment: ' + result.sentiment + '</h3>');
                         $('#results').append('<p>Confidence - Positive: ' + result.overall_scores.positive.toFixed(2) + ', Neutral: ' + result.overall_scores.neutral.toFixed(2) + ', Negative: ' + result.overall_scores.negative.toFixed(2) + '</p>');
+
+                        if (result.key_phrases.length > 0) {
+                            $('#results').append('<h4>Key Phrases:</h4>');
+                            result.key_phrases.forEach(function(phrase) {
+                                $('#results').append('<p>' + phrase + '</p>');
+                            });
+                        }
+
                         if (result.opinions.length > 0) {
                             result.opinions.forEach(function(opinion) {
                                 $('#results').append('<p>Aspect: ' + opinion.target + ' (' + opinion.sentiment + ')</p>');
