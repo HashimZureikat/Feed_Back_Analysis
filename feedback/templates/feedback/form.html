@@ -16,7 +16,9 @@
             <h2>Test with your own text</h2>
             <form id="sentimentForm" method="post" data-action-url="{% url 'analyze_feedback' %}">
                 {% csrf_token %}
-                <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here..."></textarea>
+                <label>
+                    <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here..." style="width: 600px;"></textarea>
+                </label>
                 <br>
                 <button type="submit" class="btn btn-primary">Classify Text</button>
             </form>

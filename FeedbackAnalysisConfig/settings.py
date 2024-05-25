@@ -7,6 +7,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-default-secret-key')
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
+# Add this line to specify the custom user model
+AUTH_USER_MODEL = 'feedback.CustomUser'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

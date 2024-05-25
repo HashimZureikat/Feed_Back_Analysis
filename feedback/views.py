@@ -3,9 +3,24 @@ from django.http import JsonResponse
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 from django.conf import settings
+from django.urls import reverse_lazy
+from django.views import generic
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class RegisterView(generic.CreateView):
+    form_class = None
+    success_url = reverse_lazy('login')
+    template_name = 'feedback/registration/register.html'
+
+    def get_form_class(self):
+        if self.form_class is None:
+            from .forms import CustomUserCreationForm
+            self.form_class = CustomUserCreationForm
+        return self.form_class
+
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
@@ -15,6 +30,7 @@ def authenticate_client():
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
+
 
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
@@ -27,8 +43,10 @@ def extract_key_phrases(client, documents):
             key_phrases_results.append({"key_phrases": doc.key_phrases})
     return key_phrases_results
 
+
 def home(request):
     return render(request, 'home.html')
+
 
 def analyze_feedback(request):
     if request.method == 'POST':

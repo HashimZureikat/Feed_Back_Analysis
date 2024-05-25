@@ -1,8 +1,13 @@
+# FeedbackAnalysisConfig/urls.py
 from django.contrib import admin
-from django.urls import path
-from feedback import views
+from django.urls import path, include
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    path('', views.home, name='home'),  # Home page at the root URL
-    path('analyze-feedback/', views.analyze_feedback, name='analyze_feedback'),
+    path('admin/', admin.site.urls),
+    path('home/', include('feedback.urls')),
+    path('analyze_feedback/', include('feedback.urls')),
+    path('register/', include('feedback.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('', RedirectView.as_view(url='/home/', permanent=True)),  # Redirect root to home
 ]
