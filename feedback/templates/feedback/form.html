@@ -17,7 +17,7 @@
             <form id="sentimentForm" method="post" data-action-url="{% url 'analyze_feedback' %}">
                 {% csrf_token %}
                 <label>
-                    <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here..."></textarea>
+                    <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here..." style="width: 400px;"></textarea>
                 </label>
                 <br>
                 <button type="submit" class="btn btn-primary">Classify Text</button>
