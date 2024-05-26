@@ -15,10 +15,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
+
 
 def custom_login(request):
     if request.method == 'POST':
@@ -32,9 +34,11 @@ def custom_login(request):
             messages.error(request, 'Invalid username or password.')
     return render(request, 'feedback/registration/login.html')
 
+
 @login_required
 def home(request):
     return render(request, 'home.html')
+
 
 @login_required
 def submit_feedback(request):
@@ -44,6 +48,7 @@ def submit_feedback(request):
             Feedback.objects.create(user=request.user, text=text)
             return redirect('home')
     return render(request, 'feedback/submit_feedback.html')
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'manager')
@@ -56,6 +61,7 @@ def review_feedback(request, feedback_id):
         return redirect('feedback_list')
     return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
 
+
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def approve_feedback(request, feedback_id):
@@ -65,7 +71,8 @@ def approve_feedback(request, feedback_id):
         feedback.approved_at = timezone.now()
         feedback.save()
         return redirect('feedback_list')
-    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
+    return render(request, 'feedback/approve_feedback.html', {'feedback': feedback})
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -76,13 +83,15 @@ def reject_feedback(request, feedback_id):
         feedback.rejected_at = timezone.now()
         feedback.save()
         return redirect('feedback_list')
-    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
+    return render(request, 'feedback/reject_feedback.html', {'feedback': feedback})
+
 
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
+
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
@@ -92,6 +101,7 @@ def authenticate_client():
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
+
 
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
@@ -103,6 +113,7 @@ def extract_key_phrases(client, documents):
         else:
             key_phrases_results.append({"key_phrases": doc.key_phrases})
     return key_phrases_results
+
 
 @login_required
 def analyze_feedback(request):
@@ -174,3 +185,7 @@ def analyze_feedback(request):
             return JsonResponse({'error': 'Failed to analyze sentiment due to a server error'}, status=500)
     else:
         return render(request, 'feedback/form.html')
+
+
+def choice_page(request):
+    return render(request, 'feedback/choice_page.html')

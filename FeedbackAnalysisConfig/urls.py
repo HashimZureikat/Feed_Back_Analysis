@@ -8,7 +8,7 @@ urlpatterns = [
     path('home/', include('feedback.urls')),
     path('analyze_feedback/', include('feedback.urls')),
     path('register/', include('feedback.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),  # Include auth URLs
-    path('feedback/', include('feedback.urls')),  # Include feedback app URLs
-    path('', RedirectView.as_view(url='/feedback/register/', permanent=True)),  # Redirect root to home
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('feedback/', include('feedback.urls')),
+    path('', RedirectView.as_view(url='/feedback/home/', permanent=True)),  # Redirect root to home
 ]
