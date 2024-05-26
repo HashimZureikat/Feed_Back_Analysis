@@ -21,12 +21,19 @@ class RegisterView(generic.CreateView):
     success_url = reverse_lazy('login')
     template_name = 'feedback/registration/register.html'
 
-    def get_form_class(self):
-        if self.form_class is None:
-            from .forms import CustomUserCreationForm
-            self.form_class = CustomUserCreationForm
-        return self.form_class
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'feedback/registration/login.html')
 
+@login_required
 def home(request):
     return render(request, 'home.html')
 
@@ -43,46 +50,40 @@ def submit_feedback(request):
 @user_passes_test(lambda u: u.role == 'manager')
 def review_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
-    feedback.status = 'reviewed'
-    feedback.reviewed_at = timezone.now()
-    feedback.save()
-    return redirect('feedback_list')
+    if request.method == 'POST':
+        feedback.status = 'reviewed'
+        feedback.reviewed_at = timezone.now()
+        feedback.save()
+        return redirect('feedback_list')
+    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def approve_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
-    feedback.status = 'approved'
-    feedback.approved_at = timezone.now()
-    feedback.save()
-    return redirect('feedback_list')
+    if request.method == 'POST':
+        feedback.status = 'approved'
+        feedback.approved_at = timezone.now()
+        feedback.save()
+        return redirect('feedback_list')
+    return render(request, 'feedback/approve_feedback.html', {'feedback': feedback})
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def reject_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
-    feedback.status = 'rejected'
-    feedback.rejected_at = timezone.now()
-    feedback.save()
-    return redirect('feedback_list')
+    if request.method == 'POST':
+        feedback.status = 'rejected'
+        feedback.rejected_at = timezone.now()
+        feedback.save()
+        return redirect('feedback_list')
+    return render(request, 'feedback/reject_feedback.html', {'feedback': feedback})
 
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
-
-def custom_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('home')  # Redirect to a success page.
-        else:
-            messages.error(request, 'Invalid username or password.')
-    return render(request, 'feedback/registration/login.html')
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
