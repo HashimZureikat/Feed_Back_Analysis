@@ -7,11 +7,13 @@ from django.urls import reverse_lazy
 from django.views import generic
 import logging
 
+from feedback.forms import CustomUserCreationForm
+
 logger = logging.getLogger(__name__)
 
 
 class RegisterView(generic.CreateView):
-    form_class = None
+    form_class = CustomUserCreationForm
     success_url = reverse_lazy('login')
     template_name = 'feedback/registration/register.html'
 
