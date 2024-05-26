@@ -7,7 +7,6 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-default-secret-key')
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
-# Add this line to specify the custom user model
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
 INSTALLED_APPS = [
@@ -18,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'feedback',
+    'home',  # Added home app here
 ]
 
 MIDDLEWARE = [
@@ -66,6 +66,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Azure Text Analytics Settings
 AZURE_SENTIMENT_ENDPOINT = "https://ca-la.cognitiveservices.azure.com/"
 AZURE_SUBSCRIPTION_KEY = "71cd915ca08d48218e3479c96690d2e6"

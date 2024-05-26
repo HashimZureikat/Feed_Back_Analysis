@@ -117,3 +117,4 @@ def analyze_feedback(request):
             return JsonResponse({'error': 'Failed to analyze sentiment due to a server error'}, status=500)
     else:
         return render(request, 'feedback/form.html')
+

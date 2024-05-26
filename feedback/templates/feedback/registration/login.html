@@ -1,0 +1,17 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback Sentiment Results</title>
+</head>
+<body>
+<h1>Feedback Sentiment Analysis</h1>
+{% if sentiments %}
+    <p>Your feedback is considered: {{ sentiments|join:", " }}</p>
+{% else %}
+    <p>No sentiment data available.</p>
+{% endif %}
+</body>
+</html>
