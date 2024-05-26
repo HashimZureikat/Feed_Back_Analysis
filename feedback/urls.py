@@ -11,5 +11,5 @@ urlpatterns = [
     path('reject_feedback/<int:feedback_id>/', reject_feedback, name='reject_feedback'),
     path('feedback_list/', feedback_list, name='feedback_list'),
     path('custom_login/', custom_login, name='custom_login'),
-    path('choice/', choice_page, name='choice_page'),  # New URL pattern for choice page
+    path('choice/', choice_page, name='choice_page'),
 ]

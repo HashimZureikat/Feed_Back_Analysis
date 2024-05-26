@@ -29,7 +29,7 @@ def custom_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('home')
+            return redirect('analyze_feedback')  # Redirect to analyze_feedback after login
         else:
             messages.error(request, 'Invalid username or password.')
     return render(request, 'feedback/registration/login.html')

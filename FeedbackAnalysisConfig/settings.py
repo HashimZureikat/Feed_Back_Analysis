@@ -10,7 +10,7 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
 LOGIN_URL = '/feedback/custom_login/'
-LOGIN_REDIRECT_URL = '/feedback/home/'
+LOGIN_REDIRECT_URL = '/feedback/analyze_feedback/'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
