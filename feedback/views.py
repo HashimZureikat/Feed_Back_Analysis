@@ -1,4 +1,3 @@
-# feedback/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
@@ -66,7 +65,7 @@ def approve_feedback(request, feedback_id):
         feedback.approved_at = timezone.now()
         feedback.save()
         return redirect('feedback_list')
-    return render(request, 'feedback/approve_feedback.html', {'feedback': feedback})
+    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -77,7 +76,7 @@ def reject_feedback(request, feedback_id):
         feedback.rejected_at = timezone.now()
         feedback.save()
         return redirect('feedback_list')
-    return render(request, 'feedback/reject_feedback.html', {'feedback': feedback})
+    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
 
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])

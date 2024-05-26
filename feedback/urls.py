@@ -1,4 +1,3 @@
-# feedback/urls.py
 from django.urls import path
 from .views import RegisterView, home, analyze_feedback, submit_feedback, review_feedback, approve_feedback, reject_feedback, feedback_list, custom_login
 

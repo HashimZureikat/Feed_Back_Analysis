@@ -1,0 +1,13 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Reject Feedback</h2>
+  <p><strong>User:</strong> {{ feedback.user.username }}</p>
+  <p><strong>Feedback Text:</strong> {{ feedback.text }}</p>
+  <p><strong>Status:</strong> {{ feedback.status }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+  </form>
+{% endblock %}

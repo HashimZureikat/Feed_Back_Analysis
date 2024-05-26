@@ -1,0 +1,13 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Approve Feedback</h2>
+  <p><strong>User:</strong> {{ feedback.user.username }}</p>
+  <p><strong>Feedback Text:</strong> {{ feedback.text }}</p>
+  <p><strong>Status:</strong> {{ feedback.status }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+  </form>
+{% endblock %}

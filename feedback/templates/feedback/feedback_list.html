@@ -1,42 +1,31 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Feedback List</title>
-</head>
-<body>
-<div class="container">
-    <h2>Feedback List</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Text</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for feedback in feedbacks %}
-            <tr>
-                <td>{{ feedback.user.username }}</td>
-                <td>{{ feedback.text }}</td>
-                <td>{{ feedback.status }}</td>
-                <td>
-                    {% if feedback.status == 'submitted' and user.role == 'manager' %}
-                    <a href="{% url 'review_feedback' feedback.id %}" class="btn btn-warning">Review</a>
-                    {% elif feedback.status == 'reviewed' and user.role == 'admin' %}
-                    <a href="{% url 'approve_feedback' feedback.id %}" class="btn btn-success">Approve</a>
-                    <a href="{% url 'reject_feedback' feedback.id %}" class="btn btn-danger">Reject</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-</body>
-</html>
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Feedback List</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Text</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for feedback in feedbacks %}
+        <tr>
+          <td>{{ feedback.user.username }}</td>
+          <td>{{ feedback.text }}</td>
+          <td>{{ feedback.status }}</td>
+          <td>
+            <a href="{% url 'review_feedback' feedback.id %}" class="btn btn-warning">Review</a>
+            {% if user.role == 'admin' %}
+              <a href="{% url 'approve_feedback' feedback.id %}" class="btn btn-success">Approve</a>
+              <a href="{% url 'reject_feedback' feedback.id %}" class="btn btn-danger">Reject</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
