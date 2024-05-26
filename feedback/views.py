@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
-    success_url = reverse_lazy('login')
+    success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
 
 def custom_login(request):

@@ -10,5 +10,5 @@ urlpatterns = [
     path('register/', include('feedback.urls')),
     path('accounts/', include('django.contrib.auth.urls')),  # Include auth URLs
     path('feedback/', include('feedback.urls')),  # Include feedback app URLs
-    path('', RedirectView.as_view(url='/home/', permanent=True)),  # Redirect root to home
+    path('', RedirectView.as_view(url='/feedback/register/', permanent=True)),  # Redirect root to home
 ]
