@@ -1,16 +1,20 @@
-from django.shortcuts import render
+# feedback/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils import timezone
+from django.urls import reverse_lazy
+from django.views import generic
 from django.http import JsonResponse
+from .models import Feedback, CustomUser
+from .forms import CustomUserCreationForm
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 from django.conf import settings
-from django.urls import reverse_lazy
-from django.views import generic
 import logging
 
-from feedback.forms import CustomUserCreationForm
-
 logger = logging.getLogger(__name__)
-
 
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
@@ -23,6 +27,62 @@ class RegisterView(generic.CreateView):
             self.form_class = CustomUserCreationForm
         return self.form_class
 
+def home(request):
+    return render(request, 'home.html')
+
+@login_required
+def submit_feedback(request):
+    if request.method == 'POST':
+        text = request.POST.get('feedback')
+        if text:
+            Feedback.objects.create(user=request.user, text=text)
+            return redirect('home')
+    return render(request, 'feedback/submit_feedback.html')
+
+@login_required
+@user_passes_test(lambda u: u.role == 'manager')
+def review_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    feedback.status = 'reviewed'
+    feedback.reviewed_at = timezone.now()
+    feedback.save()
+    return redirect('feedback_list')
+
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def approve_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    feedback.status = 'approved'
+    feedback.approved_at = timezone.now()
+    feedback.save()
+    return redirect('feedback_list')
+
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def reject_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    feedback.status = 'rejected'
+    feedback.rejected_at = timezone.now()
+    feedback.save()
+    return redirect('feedback_list')
+
+@login_required
+@user_passes_test(lambda u: u.role in ['manager', 'admin'])
+def feedback_list(request):
+    feedbacks = Feedback.objects.all()
+    return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
+
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')  # Redirect to a success page.
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'feedback/registration/login.html')
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
@@ -32,7 +92,6 @@ def authenticate_client():
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
-
 
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
@@ -45,11 +104,7 @@ def extract_key_phrases(client, documents):
             key_phrases_results.append({"key_phrases": doc.key_phrases})
     return key_phrases_results
 
-
-def home(request):
-    return render(request, 'home.html')
-
-
+@login_required
 def analyze_feedback(request):
     if request.method == 'POST':
         feedback_text = request.POST.get('feedback', '')
@@ -119,4 +174,3 @@ def analyze_feedback(request):
             return JsonResponse({'error': 'Failed to analyze sentiment due to a server error'}, status=500)
     else:
         return render(request, 'feedback/form.html')
-

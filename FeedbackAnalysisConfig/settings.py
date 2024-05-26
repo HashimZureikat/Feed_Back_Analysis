@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'feedback',
-    'home',  # Added home app here
+    'home',  # Ensure this app is included if it exists
 ]
 
 MIDDLEWARE = [
@@ -35,7 +35,7 @@ ROOT_URLCONF = 'FeedbackAnalysisConfig.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # Ensure this path is correct
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
