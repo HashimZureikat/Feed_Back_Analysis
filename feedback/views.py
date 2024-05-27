@@ -58,15 +58,13 @@ def feedback_list(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.role == 'manager')
+@user_passes_test(lambda u: u.role == 'manager' or u.role == 'admin')
 def review_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
     if request.method == 'POST':
-        print(f"Reviewing feedback: {feedback_id}")  # Debug statement
         feedback.status = 'reviewed'
         feedback.reviewed_at = timezone.now()
         feedback.save()
-        print(f"Feedback {feedback_id} reviewed.")  # Debug statement
     return redirect('feedback_list')
 
 
@@ -75,11 +73,9 @@ def review_feedback(request, feedback_id):
 def approve_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
     if request.method == 'POST':
-        print(f"Approving feedback: {feedback_id}")  # Debug statement
         feedback.status = 'approved'
         feedback.approved_at = timezone.now()
         feedback.save()
-        print(f"Feedback {feedback_id} approved.")  # Debug statement
     return redirect('feedback_list')
 
 
@@ -88,11 +84,9 @@ def approve_feedback(request, feedback_id):
 def reject_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
     if request.method == 'POST':
-        print(f"Rejecting feedback: {feedback_id}")  # Debug statement
         feedback.status = 'rejected'
         feedback.rejected_at = timezone.now()
         feedback.save()
-        print(f"Feedback {feedback_id} rejected.")  # Debug statement
     return redirect('feedback_list')
 
 
