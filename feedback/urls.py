@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, home, analyze_feedback, submit_feedback, review_feedback, approve_feedback, reject_feedback, feedback_list, custom_login, choice_page
+from .views import RegisterView, home, analyze_feedback, submit_feedback, review_feedback, approve_feedback, reject_feedback, feedback_list, custom_login, choice_page, clear_feedback_history
 
 urlpatterns = [
     path('home/', home, name='home'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('feedback_list/', feedback_list, name='feedback_list'),
     path('custom_login/', custom_login, name='custom_login'),
     path('choice/', choice_page, name='choice_page'),
+    path('clear_feedback_history/', clear_feedback_history, name='clear_feedback_history'),
 ]

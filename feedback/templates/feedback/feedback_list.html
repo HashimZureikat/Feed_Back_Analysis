@@ -2,6 +2,10 @@
 
 {% block content %}
   <h2>Feedback List</h2>
+  <form action="{% url 'clear_feedback_history' %}" method="post" style="margin-bottom: 20px;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Clear Feedback History</button>
+  </form>
   <table class="table">
     <thead>
       <tr>

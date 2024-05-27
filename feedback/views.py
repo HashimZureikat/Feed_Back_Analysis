@@ -90,6 +90,15 @@ def reject_feedback(request, feedback_id):
     return redirect('feedback_list')
 
 
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def clear_feedback_history(request):
+    if request.method == 'POST':
+        Feedback.objects.all().delete()
+        messages.success(request, 'Feedback history cleared.')
+        return redirect('feedback_list')
+
+
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
     endpoint = settings.AZURE_SENTIMENT_ENDPOINT
@@ -136,7 +145,7 @@ def analyze_feedback(request):
                 negative_score = doc.confidence_scores.negative
 
                 # Adjusting threshold for neutral sentiment
-                if neutral_score >= 0.05:
+                if neutral_score >= 0.02:
                     overall_sentiment = 'neutral'
                 elif positive_score >= 0.5:
                     overall_sentiment = 'positive'
