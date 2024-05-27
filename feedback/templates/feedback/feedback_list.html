@@ -18,10 +18,21 @@
           <td>{{ feedback.text }}</td>
           <td>{{ feedback.status }}</td>
           <td>
-            <a href="{% url 'review_feedback' feedback.id %}" class="btn btn-warning">Review</a>
+            {% if user.role == 'manager' or user.role == 'admin' %}
+              <form action="{% url 'review_feedback' feedback.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning">Review</button>
+              </form>
+            {% endif %}
             {% if user.role == 'admin' %}
-              <a href="{% url 'approve_feedback' feedback.id %}" class="btn btn-success">Approve</a>
-              <a href="{% url 'reject_feedback' feedback.id %}" class="btn btn-danger">Reject</a>
+              <form action="{% url 'approve_feedback' feedback.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">Approve</button>
+              </form>
+              <form action="{% url 'reject_feedback' feedback.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Reject</button>
+              </form>
             {% endif %}
           </td>
         </tr>

@@ -46,44 +46,8 @@ def submit_feedback(request):
         text = request.POST.get('feedback')
         if text:
             Feedback.objects.create(user=request.user, text=text)
-            return redirect('home')
+            return redirect('analyze_feedback')  # Redirect to analyze_feedback after submitting feedback
     return render(request, 'feedback/submit_feedback.html')
-
-
-@login_required
-@user_passes_test(lambda u: u.role == 'manager')
-def review_feedback(request, feedback_id):
-    feedback = get_object_or_404(Feedback, id=feedback_id)
-    if request.method == 'POST':
-        feedback.status = 'reviewed'
-        feedback.reviewed_at = timezone.now()
-        feedback.save()
-        return redirect('feedback_list')
-    return render(request, 'feedback/review_feedback.html', {'feedback': feedback})
-
-
-@login_required
-@user_passes_test(lambda u: u.role == 'admin')
-def approve_feedback(request, feedback_id):
-    feedback = get_object_or_404(Feedback, id=feedback_id)
-    if request.method == 'POST':
-        feedback.status = 'approved'
-        feedback.approved_at = timezone.now()
-        feedback.save()
-        return redirect('feedback_list')
-    return render(request, 'feedback/approve_feedback.html', {'feedback': feedback})
-
-
-@login_required
-@user_passes_test(lambda u: u.role == 'admin')
-def reject_feedback(request, feedback_id):
-    feedback = get_object_or_404(Feedback, id=feedback_id)
-    if request.method == 'POST':
-        feedback.status = 'rejected'
-        feedback.rejected_at = timezone.now()
-        feedback.save()
-        return redirect('feedback_list')
-    return render(request, 'feedback/reject_feedback.html', {'feedback': feedback})
 
 
 @login_required
@@ -91,6 +55,45 @@ def reject_feedback(request, feedback_id):
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
+
+
+@login_required
+@user_passes_test(lambda u: u.role == 'manager')
+def review_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    if request.method == 'POST':
+        print(f"Reviewing feedback: {feedback_id}")  # Debug statement
+        feedback.status = 'reviewed'
+        feedback.reviewed_at = timezone.now()
+        feedback.save()
+        print(f"Feedback {feedback_id} reviewed.")  # Debug statement
+    return redirect('feedback_list')
+
+
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def approve_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    if request.method == 'POST':
+        print(f"Approving feedback: {feedback_id}")  # Debug statement
+        feedback.status = 'approved'
+        feedback.approved_at = timezone.now()
+        feedback.save()
+        print(f"Feedback {feedback_id} approved.")  # Debug statement
+    return redirect('feedback_list')
+
+
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def reject_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    if request.method == 'POST':
+        print(f"Rejecting feedback: {feedback_id}")  # Debug statement
+        feedback.status = 'rejected'
+        feedback.rejected_at = timezone.now()
+        feedback.save()
+        print(f"Feedback {feedback_id} rejected.")  # Debug statement
+    return redirect('feedback_list')
 
 
 def authenticate_client():
