@@ -145,7 +145,7 @@ def analyze_feedback(request):
                 negative_score = doc.confidence_scores.negative
 
                 # Adjusting threshold for neutral sentiment
-                if neutral_score >= 0.02:
+                if neutral_score >= 0.06:
                     overall_sentiment = 'neutral'
                 elif positive_score >= 0.5:
                     overall_sentiment = 'positive'
