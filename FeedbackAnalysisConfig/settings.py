@@ -92,6 +92,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 
 AZURE_SENTIMENT_ENDPOINT = "https://ca-la.cognitiveservices.azure.com/"
 AZURE_SUBSCRIPTION_KEY = "71cd915ca08d48218e3479c96690d2e6"

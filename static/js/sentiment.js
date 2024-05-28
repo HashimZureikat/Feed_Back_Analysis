@@ -1,3 +1,4 @@
+
 $(document).ready(function() {
     $('#sentimentForm').on('submit', function(e) {
         e.preventDefault();
@@ -68,3 +69,4 @@ $(document).ready(function() {
         });
     });
 });
+

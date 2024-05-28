@@ -1,4 +1,3 @@
-/* static/js/sentiment.js */
 
 $(document).ready(function() {
     $('#sentimentForm').on('submit', function(e) {
@@ -70,3 +69,4 @@ $(document).ready(function() {
         });
     });
 });
+
