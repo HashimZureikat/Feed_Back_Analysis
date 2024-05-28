@@ -1,3 +1,5 @@
+# FeedbackAnalysisConfig/settings.py
+
 import os
 from pathlib import Path
 
@@ -21,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'feedback',
     'home',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -54,6 +57,15 @@ TEMPLATES = [
         },
     },
 ]
+
+ASGI_APPLICATION = 'FeedbackAnalysisConfig.asgi.application'
+
+# Channel layers configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 WSGI_APPLICATION = 'FeedbackAnalysisConfig.wsgi.application'
 

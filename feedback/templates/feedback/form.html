@@ -17,7 +17,7 @@
             <form id="sentimentForm" method="post" data-action-url="{% url 'analyze_feedback' %}">
                 {% csrf_token %}
                 <label>
-                    <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here..." style="width: 400px;"></textarea>
+                    <textarea name="feedback" class="form-control" rows="5" placeholder="Enter your text here." style="width: 400px;"></textarea>
                 </label>
                 <br>
                 <button type="submit" class="btn btn-primary">Classify Text</button>
@@ -42,6 +42,31 @@
         </div>
     </div>
 </div>
+
+<script>
+    // WebSocket client code
+    let socket = new WebSocket("ws://127.0.0.1:8000/ws/feedback/");
+
+    socket.onmessage = function(event) {
+        console.log("Message from server:", event.data);
+        document.getElementById('results').innerText = "Message from server: " + event.data;
+    };
+
+    socket.onopen = function(event) {
+        console.log("WebSocket is open now.");
+        document.getElementById('results').innerText = "WebSocket is open now.";
+    };
+
+    socket.onclose = function(event) {
+        console.log("WebSocket is closed now.");
+        document.getElementById('results').innerText = "WebSocket is closed now.";
+    };
+
+    socket.onerror = function(error) {
+        console.log("WebSocket Error:", error);
+        document.getElementById('results').innerText = "WebSocket Error: " + error;
+    };
+</script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/sentiment.js' %}"></script>
