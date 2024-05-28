@@ -69,6 +69,13 @@ CHANNEL_LAYERS = {
 
 WSGI_APPLICATION = 'FeedbackAnalysisConfig.wsgi.application'
 
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

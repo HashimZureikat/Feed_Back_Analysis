@@ -1,5 +1,3 @@
-# feedback/views.py
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
@@ -8,6 +6,8 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.views import generic
 from django.http import JsonResponse
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 from .models import Feedback, CustomUser
 from .forms import CustomUserCreationForm
 from azure.ai.textanalytics import TextAnalyticsClient
@@ -19,10 +19,12 @@ from channels.layers import get_channel_layer
 
 logger = logging.getLogger(__name__)
 
+
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
+
 
 def custom_login(request):
     if request.method == 'POST':
@@ -36,24 +38,35 @@ def custom_login(request):
             messages.error(request, 'Invalid username or password.')
     return render(request, 'feedback/registration/login.html')
 
+
 @login_required
 def home(request):
     return render(request, 'home.html')
+
 
 @login_required
 def submit_feedback(request):
     if request.method == 'POST':
         text = request.POST.get('feedback')
         if text:
-            Feedback.objects.create(user=request.user, text=text)
-            return redirect('analyze_feedback')
+            feedback = Feedback.objects.create(user=request.user, text=text)
+            logger.info(f"Feedback {feedback.id} submitted by user {request.user.id}")
+            return redirect('feedback_list')
     return render(request, 'feedback/submit_feedback.html')
+
+
+def invalidate_feedback_cache():
+    logger.info("Invalidating feedback cache")
+    cache.delete('feedback_list')
+
 
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
+    logger.info(f"Retrieved {feedbacks.count()} feedbacks")
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'manager' or u.role == 'admin')
@@ -63,7 +76,10 @@ def review_feedback(request, feedback_id):
         feedback.status = 'reviewed'
         feedback.reviewed_at = timezone.now()
         feedback.save()
+        invalidate_feedback_cache()
+        logger.info(f"Feedback {feedback_id} reviewed with status: {feedback.status}")
     return redirect('feedback_list')
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -73,7 +89,10 @@ def approve_feedback(request, feedback_id):
         feedback.status = 'approved'
         feedback.approved_at = timezone.now()
         feedback.save()
+        invalidate_feedback_cache()
+        logger.info(f"Feedback {feedback_id} approved with status: {feedback.status}")
     return redirect('feedback_list')
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -83,7 +102,10 @@ def reject_feedback(request, feedback_id):
         feedback.status = 'rejected'
         feedback.rejected_at = timezone.now()
         feedback.save()
+        invalidate_feedback_cache()
+        logger.info(f"Feedback {feedback_id} rejected with status: {feedback.status}")
     return redirect('feedback_list')
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -91,7 +113,10 @@ def clear_feedback_history(request):
     if request.method == 'POST':
         Feedback.objects.all().delete()
         messages.success(request, 'Feedback history cleared.')
+        invalidate_feedback_cache()
+        logger.info("All feedback history cleared")
         return redirect('feedback_list')
+
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
@@ -101,6 +126,7 @@ def authenticate_client():
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
+
 
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
@@ -112,6 +138,7 @@ def extract_key_phrases(client, documents):
         else:
             key_phrases_results.append({"key_phrases": doc.key_phrases})
     return key_phrases_results
+
 
 @login_required
 def analyze_feedback(request):
@@ -136,12 +163,13 @@ def analyze_feedback(request):
                 neutral_score = doc.confidence_scores.neutral
                 negative_score = doc.confidence_scores.negative
 
-                if neutral_score >= 0.06:
-                    overall_sentiment = 'neutral'
-                elif positive_score >= 0.5:
+                overall_sentiment = 'neutral'
+                if positive_score >= 0.5:
                     overall_sentiment = 'positive'
                 elif negative_score >= 0.5:
                     overall_sentiment = 'negative'
+                elif neutral_score >= 0.06:
+                    overall_sentiment = 'neutral'
                 else:
                     overall_sentiment = 'mixed'
 
@@ -192,6 +220,7 @@ def analyze_feedback(request):
             return JsonResponse({'error': 'Failed to analyze sentiment due to a server error'}, status=500)
     else:
         return render(request, 'feedback/form.html')
+
 
 def choice_page(request):
     return render(request, 'feedback/choice_page.html')
