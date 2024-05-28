@@ -14,11 +14,87 @@ body {
 /* Light theme styles */
 .light-theme {
     background-color: #fff;
-    color: #000;
+    color: #000; /* Ensures text is black in light theme */
 }
 
 /* Dark theme styles */
 .dark-theme {
     background-color: #333;
-    color: #fff;
+    color: #fff; /* Ensures text is white in dark theme */
+}
+
+.dark-theme .container {
+    background: #444; /* Slightly lighter than the body background */
+    color: #fff; /* Ensures text in containers is white in dark theme */
+}
+
+.dark-theme a {
+    color: #1e90ff; /* Adjust link color for dark theme */
+}
+
+.dark-theme .btn-primary {
+    background-color: #1e90ff;
+    border-color: #1e90ff;
+}
+
+.dark-theme .form-control {
+    background-color: #555;
+    color: #fff; /* Ensures text in form controls is white in dark theme */
+    border: 1px solid #666;
+}
+
+.dark-theme .form-select {
+    background-color: #555;
+    color: #fff; /* Ensures text in form selects is white in dark theme */
+    border: 1px solid #666;
+}
+
+/* Explicitly set text color for all text elements */
+.dark-theme .container h1,
+.dark-theme .container h2,
+.dark-theme .container h3,
+.dark-theme .container h4,
+.dark-theme .container h5,
+.dark-theme .container h6,
+.dark-theme .container p,
+.dark-theme .container label,
+.dark-theme .container span,
+.dark-theme .container div {
+    color: #fff; /* Ensures all text in containers is white in dark theme */
+}
+
+.light-theme .container h1,
+.light-theme .container h2,
+.light-theme .container h3,
+.light-theme .container h4,
+.light-theme .container h5,
+.light-theme .container h6,
+.light-theme .container p,
+.light-theme .container label,
+.light-theme .container span,
+.light-theme .container div {
+    color: #000; /* Ensures all text in containers is black in light theme */
+}
+
+/* Make the selection boxes as small as possible */
+.selection-boxes {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Add some space between the boxes */
+}
+
+.selection-boxes form {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.selection-boxes select {
+    width: auto; /* Adjust the width to fit the content */
+    padding: 0.25rem;
+    font-size: 0.875rem; /* Smaller font size */
+}
+
+.selection-boxes .btn-sm {
+    padding: 0.25rem 0.5rem; /* Smaller padding */
+    font-size: 0.875rem; /* Smaller font size */
 }
