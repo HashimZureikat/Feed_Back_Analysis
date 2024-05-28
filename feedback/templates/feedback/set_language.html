@@ -1,0 +1,24 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Language</title>
+</head>
+<body>
+<div class="container">
+    <h2>Set Language</h2>
+    <form method="post" action="{% url 'set_language' %}">
+        {% csrf_token %}
+        <label for="language">Choose Language:</label>
+        <select name="language" id="language">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Set Language</button>
+    </form>
+</div>
+</body>
+</html>

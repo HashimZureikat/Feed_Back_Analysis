@@ -11,3 +11,14 @@ body {
     margin-top: 50px;
 }
 
+/* Light theme styles */
+.light-theme {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Dark theme styles */
+.dark-theme {
+    background-color: #333;
+    color: #fff;
+}

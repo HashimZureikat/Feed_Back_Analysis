@@ -8,7 +8,7 @@ from django.views import generic
 from django.http import JsonResponse
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
-from .models import Feedback, CustomUser
+from .models import Feedback
 from .forms import CustomUserCreationForm
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
@@ -16,6 +16,7 @@ from django.conf import settings
 import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,21 @@ def custom_login(request):
 
 @login_required
 def home(request):
-    return render(request, 'home.html')
+    if request.method == 'POST':
+        if 'theme' in request.POST:
+            theme = request.POST.get('theme', 'light')
+            request.session['theme'] = theme
+            messages.success(request, f'Theme set to {theme}.')
+        elif 'language' in request.POST:
+            language = request.POST.get('language', 'en')
+            response = redirect('home')
+            response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)  # Cookie expires in 30 days
+            messages.success(request, f'Language set to {language}.')
+            return response
+
+    theme = request.session.get('theme', 'light')
+    language = request.COOKIES.get('language', 'en')
+    return render(request, 'home.html', {'theme': theme, 'language': language})
 
 
 @login_required
@@ -224,3 +239,22 @@ def analyze_feedback(request):
 
 def choice_page(request):
     return render(request, 'feedback/choice_page.html')
+
+
+@require_POST
+@login_required
+def set_theme(request):
+    theme = request.POST.get('theme', 'light')
+    request.session['theme'] = theme
+    messages.success(request, f'Theme set to {theme}.')
+    return redirect('home')
+
+
+@require_POST
+@login_required
+def set_language(request):
+    language = request.POST.get('language', 'en')
+    response = redirect('home')
+    response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)  # Cookie expires in 30 days
+    messages.success(request, f'Language set to {language}.')
+    return response

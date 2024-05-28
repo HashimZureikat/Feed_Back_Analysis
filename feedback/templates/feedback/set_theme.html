@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Theme</title>
+</head>
+<body>
+<div class="container">
+    <h2>Set Theme</h2>
+    <form method="post" action="{% url 'set_theme' %}">
+        {% csrf_token %}
+        <label for="theme">Choose Theme:</label>
+        <select name="theme" id="theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Set Theme</button>
+    </form>
+</div>
+</body>
+</html>
+
