@@ -4,9 +4,9 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('DJANGO_SECRET_KEY', default='your-default-secret-key')
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['your-app-name.azurewebsites.net']
+ALLOWED_HOSTS = ['your-webapp-name.azurewebsites.net']
 
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
@@ -59,7 +59,6 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'FeedbackAnalysisConfig.asgi.application'
 
-# Channel layers configuration
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
@@ -76,14 +75,13 @@ CACHES = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'FeedbackAnalysisApp.azurewebsites.net']
+
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
