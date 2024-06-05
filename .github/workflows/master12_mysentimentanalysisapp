@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest  # Change to Windows runner
+    runs-on: windows-latest  # Use Windows runner
 
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
           path: release.zip
 
   deploy:
-    runs-on: windows-latest  # Change to Windows runner
+    runs-on: windows-latest  # Use Windows runner
     needs: build
 
     steps:
