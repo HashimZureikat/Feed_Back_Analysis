@@ -1,24 +1,31 @@
-body {
-    background-color: #f4f4f4;
-    font-family: Arial, sans-serif;
+/* Light Theme */
+body.light-theme {
+    background-color: #f8f9fa; /* Light background */
+    color: #212529;           /* Dark text */
 }
 
-.container {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-top: 50px;
-}
-
-/* Light theme styles */
-.light-theme {
+.light-theme .container {
     background-color: #fff;
-    color: #000;
 }
 
-/* Dark theme styles */
-.dark-theme {
-    background-color: #333;
-    color: #fff;
+/* Dark Theme */
+body.dark-theme {
+    background-color: #343a40; /* Dark background */
+    color: #f8f9fa;           /* Light text */
+}
+
+.dark-theme .container {
+    background-color: #212529;
+}
+
+/* General styles */
+.container {
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Other styles (adjust as needed) */
+h1 {
+    margin-bottom: 1.5rem;
 }
