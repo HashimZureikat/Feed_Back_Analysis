@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='your-default-secret-key')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'MySentimentAnalysisApp.azurewebsites.net']
 
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
@@ -59,7 +59,6 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'FeedbackAnalysisConfig.asgi.application'
 
-# Channel layers configuration
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
