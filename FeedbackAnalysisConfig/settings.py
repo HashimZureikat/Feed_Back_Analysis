@@ -1,13 +1,11 @@
-
-# FeedbackAnalysisConfig/settings.py
-
 import os
 from pathlib import Path
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-default-secret-key')
-DEBUG = True
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='your-default-secret-key')
+DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 AUTH_USER_MODEL = 'feedback.CustomUser'
@@ -70,7 +68,6 @@ CHANNEL_LAYERS = {
 
 WSGI_APPLICATION = 'FeedbackAnalysisConfig.wsgi.application'
 
-
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -94,7 +91,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-
-
-AZURE_SENTIMENT_ENDPOINT = "https://ca-la.cognitiveservices.azure.com/"
-AZURE_SUBSCRIPTION_KEY = "71cd915ca08d48218e3479c96690d2e6"
+AZURE_SENTIMENT_ENDPOINT = config('AZURE_SENTIMENT_ENDPOINT')
+AZURE_SUBSCRIPTION_KEY = config('AZURE_SUBSCRIPTION_KEY')
