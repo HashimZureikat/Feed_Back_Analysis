@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # Change to Windows runner
 
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
         run: python manage.py collectstatic --noinput
 
       - name: Archive production artifacts
-        run: zip -r release.zip ./*
+        run: Compress-Archive -Path * -DestinationPath release.zip
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v2
@@ -36,7 +36,7 @@ jobs:
           path: release.zip
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # Change to Windows runner
     needs: build
 
     steps:
@@ -46,7 +46,7 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: Expand-Archive -Path release.zip -DestinationPath .
 
       - name: Login to Azure
         uses: azure/login@v1
