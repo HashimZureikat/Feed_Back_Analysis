@@ -1,0 +1,5 @@
+Django>=3.2
+gunicorn
+python-decouple
+channels
+twisted
