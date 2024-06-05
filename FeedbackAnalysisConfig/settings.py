@@ -4,9 +4,9 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('DJANGO_SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['your-webapp-name.azurewebsites.net']
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='your-default-secret-key')
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
@@ -59,6 +59,7 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'FeedbackAnalysisConfig.asgi.application'
 
+# Channel layers configuration
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
@@ -79,9 +80,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'FeedbackAnalysisApp.azurewebsites.net']
-
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
