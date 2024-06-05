@@ -12,7 +12,7 @@ This project is a web application that performs sentiment analysis on user-provi
 - **User Input**: Users can input their text for analysis.
 - **Sentiment Analysis**: The application uses Azure Text Analytics to determine the sentiment of the text.
 - **Dynamic Results Display**: Results are displayed dynamically along with a corresponding GIF based on the sentiment.
-- **Error Handling**: Robust error handling to manage API errors and user input issues.
+- **Error Handling*: Robust error handling to manage API errors and user input issues.
 
 ## Technologies Used
 - **Backend**: Python, Django
