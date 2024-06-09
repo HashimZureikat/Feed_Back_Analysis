@@ -19,7 +19,7 @@ This project is a web application that performs sentiment analysis on user-provi
 - **Frontend**: HTML, CSS, JavaScript (jQuery)
 - **API Integration**: Azure Text Analytics
 - **Styling**: Bootstrap
-
+asd
 ## Project Structure
 ```
 FeedbackAnalysis/
