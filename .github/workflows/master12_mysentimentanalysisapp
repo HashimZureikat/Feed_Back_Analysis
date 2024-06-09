@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest  # Use Windows runner
+    runs-on: ubuntu-latest  # Use Linux runner
 
     steps:
       - uses: actions/checkout@v2
@@ -21,13 +21,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-linux.txt
 
       - name: Collect static files
         run: python manage.py collectstatic --noinput
 
       - name: Archive production artifacts
-        run: Compress-Archive -Path * -DestinationPath release.zip
+        run: zip -r release.zip ./*
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v2
@@ -36,7 +36,7 @@ jobs:
           path: release.zip
 
   deploy:
-    runs-on: windows-latest  # Use Windows runner
+    runs-on: ubuntu-latest  # Use Linux runner
     needs: build
 
     steps:
@@ -46,7 +46,7 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: Expand-Archive -Path release.zip -DestinationPath .
+        run: unzip release.zip
 
       - name: Login to Azure
         uses: azure/login@v1
