@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='your-default-secret-key')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'MySentimentAnalysisApp.azurewebsites.net']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'mysentimentanalysisapp.azurewebsites.net']
 
 AUTH_USER_MODEL = 'feedback.CustomUser'
 
@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'feedback',
     'home',
     'channels',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -33,6 +34,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -59,6 +61,7 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'FeedbackAnalysisConfig.asgi.application'
 
+# Channel layers configuration
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
@@ -89,6 +92,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CSRF_TRUSTED_ORIGINS = ['https://mysentimentanalysisapp.azurewebsites.net']
 
 AZURE_SENTIMENT_ENDPOINT = config('AZURE_SENTIMENT_ENDPOINT')
 AZURE_SUBSCRIPTION_KEY = config('AZURE_SUBSCRIPTION_KEY')
