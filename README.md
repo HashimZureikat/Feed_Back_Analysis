@@ -170,8 +170,8 @@ FeedbackAnalysis/
    - Navigate to **Configuration** under your Web App settings in the Azure Portal.
    - Add the following Application settings:
      - `DJANGO_SECRET_KEY`: `your-secret-key`
-     - `AZURE_SUBSCRIPTION_KEY`: `71cd915ca08d48218e3479c96690d2e6`
-     - `AZURE_SENTIMENT_ENDPOINT`: `https://ca-la.cognitiveservices.azure.com/`
+     - `AZURE_SUBSCRIPTION_KEY`: `*****
+     - `AZURE_SENTIMENT_ENDPOINT`: ****
      - `DEBUG`: `False`
 
 4. **Set the Startup Command**
