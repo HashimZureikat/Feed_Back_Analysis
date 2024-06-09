@@ -17,7 +17,7 @@ This project is a web application that performs sentiment analysis on user-provi
 - **Styling**: Bootstrap
 
 ## Project Structure
-```
+````
 FeedbackAnalysis/
 │
 ├── FeedbackAnalysisConfig/
