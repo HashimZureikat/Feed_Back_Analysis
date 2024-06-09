@@ -10,6 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest  # Use Linux runner
 
+    env:
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DEBUG: ${{ secrets.DEBUG }}
+      AZURE_SENTIMENT_ENDPOINT: ${{ secrets.AZURE_SENTIMENT_ENDPOINT }}
+      AZURE_SUBSCRIPTION_KEY: ${{ secrets.AZURE_SUBSCRIPTION_KEY }}
+
     steps:
       - uses: actions/checkout@v2
 
@@ -38,6 +44,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest  # Use Linux runner
     needs: build
+
+    env:
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DEBUG: ${{ secrets.DEBUG }}
+      AZURE_SENTIMENT_ENDPOINT: ${{ secrets.AZURE_SENTIMENT_ENDPOINT }}
+      AZURE_SUBSCRIPTION_KEY: ${{ secrets.AZURE_SUBSCRIPTION_KEY }}
 
     steps:
       - name: Download artifact from build job
