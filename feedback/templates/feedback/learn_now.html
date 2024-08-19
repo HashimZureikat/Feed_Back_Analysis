@@ -1,0 +1,89 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h2>Learn Now</h2>
+    <p>Watch the Introduction to Data and Data Science video:</p>
+
+    <div class="video-container mt-4">
+        <video id="myVideo" width="600" controls>
+            <source src="{{ video_url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="mt-4">
+        <h3>Upload Transcript</h3>
+        <input type="file" id="transcript-file" accept=".txt,.vtt">
+        <button onclick="uploadTranscript()">Upload</button>
+    </div>
+
+    <div class="mt-4">
+        <h3>Select Transcript</h3>
+        <select id="transcript-select">
+            {% for transcript in transcripts %}
+                <option value="{{ transcript }}">{{ transcript }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="chatbot-container" class="mt-4">
+        <div id="chat-messages"></div>
+        <input type="text" id="user-input" placeholder="Ask a question or request a summary">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function uploadTranscript() {
+            const fileInput = document.getElementById('transcript-file');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/feedback/upload_transcript/', {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload();  // Reload the page to update the transcript list
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value;
+            const transcriptSelect = document.getElementById('transcript-select');
+            const transcriptName = transcriptSelect.value;
+            userInput.value = '';
+
+            fetch('/feedback/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    transcript_name: transcriptName
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const chatMessages = document.getElementById('chat-messages');
+                    chatMessages.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+                    chatMessages.innerHTML += `<p><strong>Bot:</strong> ${data.response}</p>`;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+{% endblock %}

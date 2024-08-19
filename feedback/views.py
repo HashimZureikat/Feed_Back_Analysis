@@ -6,8 +6,8 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.views import generic
 from django.http import JsonResponse
-from django.core.cache import cache
-from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from .models import Feedback
 from .forms import CustomUserCreationForm
 from azure.ai.textanalytics import TextAnalyticsClient
@@ -16,15 +16,26 @@ from django.conf import settings
 import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.views.decorators.http import require_POST
+import json
+from .chatbot import get_chatbot_response
+from .azure_storage import upload_file, download_file, list_blobs
 
 logger = logging.getLogger(__name__)
-
 
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
+
+
+@login_required
+def learn_now(request):
+    video_url = f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{settings.AZURE_STORAGE_CONTAINER_NAME}/Introduction_to_Data_and_Data_Science_Final.mp4"
+    transcripts = list_blobs()
+    return render(request, 'feedback/learn_now.html', {
+        'video_url': video_url,
+        'transcripts': transcripts
+    })
 
 
 def custom_login(request):
@@ -50,13 +61,13 @@ def home(request):
         elif 'language' in request.POST:
             language = request.POST.get('language', 'en')
             response = redirect('home')
-            response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)  # Cookie expires in 30 days
+            response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)
             messages.success(request, f'Language set to {language}.')
             return response
 
     theme = request.session.get('theme', 'light')
     language = request.COOKIES.get('language', 'en')
-    return render(request, 'home.html', {'theme': theme, 'language': language})
+    return render(request, 'feedback/choice_page.html', {'theme': theme, 'language': language})
 
 
 @login_required
@@ -68,11 +79,6 @@ def submit_feedback(request):
             logger.info(f"Feedback {feedback.id} submitted by user {request.user.id}")
             return redirect('feedback_list')
     return render(request, 'feedback/submit_feedback.html')
-
-
-def invalidate_feedback_cache():
-    logger.info("Invalidating feedback cache")
-    cache.delete('feedback_list')
 
 
 @login_required
@@ -91,7 +97,6 @@ def review_feedback(request, feedback_id):
         feedback.status = 'reviewed'
         feedback.reviewed_at = timezone.now()
         feedback.save()
-        invalidate_feedback_cache()
         logger.info(f"Feedback {feedback_id} reviewed with status: {feedback.status}")
     return redirect('feedback_list')
 
@@ -104,7 +109,6 @@ def approve_feedback(request, feedback_id):
         feedback.status = 'approved'
         feedback.approved_at = timezone.now()
         feedback.save()
-        invalidate_feedback_cache()
         logger.info(f"Feedback {feedback_id} approved with status: {feedback.status}")
     return redirect('feedback_list')
 
@@ -117,7 +121,6 @@ def reject_feedback(request, feedback_id):
         feedback.status = 'rejected'
         feedback.rejected_at = timezone.now()
         feedback.save()
-        invalidate_feedback_cache()
         logger.info(f"Feedback {feedback_id} rejected with status: {feedback.status}")
     return redirect('feedback_list')
 
@@ -128,7 +131,6 @@ def clear_feedback_history(request):
     if request.method == 'POST':
         Feedback.objects.all().delete()
         messages.success(request, 'Feedback history cleared.')
-        invalidate_feedback_cache()
         logger.info("All feedback history cleared")
         return redirect('feedback_list')
 
@@ -219,7 +221,6 @@ def analyze_feedback(request):
 
                 results.append(doc_results)
 
-            # Send WebSocket message after analysis is completed
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "feedback_group",
@@ -241,8 +242,8 @@ def choice_page(request):
     return render(request, 'feedback/choice_page.html')
 
 
+@csrf_exempt
 @require_POST
-@login_required
 def set_theme(request):
     theme = request.POST.get('theme', 'light')
     request.session['theme'] = theme
@@ -250,11 +251,49 @@ def set_theme(request):
     return redirect('home')
 
 
+@csrf_exempt
 @require_POST
-@login_required
 def set_language(request):
     language = request.POST.get('language', 'en')
     response = redirect('home')
-    response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)  # Cookie expires in 30 days
+    response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)
     messages.success(request, f'Language set to {language}.')
     return response
+
+
+@csrf_exempt
+@require_POST
+def upload_transcript(request):
+    if 'file' not in request.FILES:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+
+    file = request.FILES['file']
+    file_content = file.read()
+    file_name = file.name
+
+    upload_file(file_content, file_name)
+
+    return JsonResponse({'message': 'File uploaded successfully'})
+
+
+def get_transcript(request, blob_name):
+    try:
+        transcript = download_file(blob_name)
+        return JsonResponse({'transcript': transcript})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@csrf_exempt
+@require_POST
+def chatbot(request):
+    data = json.loads(request.body)
+    message = data.get('message')
+    transcript_name = data.get('transcript_name')
+
+    if not message or not transcript_name:
+        return JsonResponse({'error': 'No message or transcript name provided'}, status=400)
+
+    transcript = download_file(transcript_name)
+    response = get_chatbot_response(message, transcript)
+    return JsonResponse({'response': response})
