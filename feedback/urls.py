@@ -4,10 +4,7 @@ from . import views
 urlpatterns = [
     path('home/', views.home, name='home'),
     path('analyze_feedback/', views.analyze_feedback, name='analyze_feedback'),
-    path('learn_now/', views.learn_now, name='learn_now'),  # New Learn Now page
-    path('register/', views.RegisterView.as_view(), name='register'),
-    path('home/', views.home, name='home'),
-    path('analyze_feedback/', views.analyze_feedback, name='analyze_feedback'),
+    path('learn_now/', views.learn_now, name='learn_now'),
     path('register/', views.RegisterView.as_view(), name='register'),
     path('submit_feedback/', views.submit_feedback, name='submit_feedback'),
     path('review_feedback/<int:feedback_id>/', views.review_feedback, name='review_feedback'),
@@ -22,5 +19,4 @@ urlpatterns = [
     path('upload_transcript/', views.upload_transcript, name='upload_transcript'),
     path('get_transcript/<str:blob_name>/', views.get_transcript, name='get_transcript'),
     path('chatbot/', views.chatbot, name='chatbot'),
-
 ]

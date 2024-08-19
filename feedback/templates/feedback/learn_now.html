@@ -1,4 +1,10 @@
 {% extends "base_generic.html" %}
+{% load static %}
+
+{% block extra_head %}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="{% static 'js/chatbot.js' %}"></script>
+{% endblock %}
 
 {% block content %}
     <h2>Learn Now</h2>
@@ -26,64 +32,19 @@
         </select>
     </div>
 
-    <div id="chatbot-container" class="mt-4">
-        <div id="chat-messages"></div>
-        <input type="text" id="user-input" placeholder="Ask a question or request a summary">
-        <button onclick="sendMessage()">Send</button>
-    </div>
+    <!-- The chatbot will be inserted here by the JavaScript -->
+{% endblock %}
 
+{% block script %}
     <script>
-        function uploadTranscript() {
-            const fileInput = document.getElementById('transcript-file');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file to upload');
-                return;
+        console.log('Chatbot script loaded');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
+            if (document.getElementById('chatbot')) {
+                console.log('Chatbot element found');
+            } else {
+                console.log('Chatbot element not found');
             }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch('/feedback/upload_transcript/', {
-                method: 'POST',
-                body: formData,
-            })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    location.reload();  // Reload the page to update the transcript list
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function sendMessage() {
-            const userInput = document.getElementById('user-input');
-            const message = userInput.value;
-            const transcriptSelect = document.getElementById('transcript-select');
-            const transcriptName = transcriptSelect.value;
-            userInput.value = '';
-
-            fetch('/feedback/chatbot/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    transcript_name: transcriptName
-                }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const chatMessages = document.getElementById('chat-messages');
-                    chatMessages.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
-                    chatMessages.innerHTML += `<p><strong>Bot:</strong> ${data.response}</p>`;
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        }
+        });
     </script>
 {% endblock %}

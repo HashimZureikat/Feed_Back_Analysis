@@ -17,10 +17,26 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
-from .chatbot import get_chatbot_response
 from .azure_storage import upload_file, download_file, list_blobs
+import openai
+from decouple import config
 
 logger = logging.getLogger(__name__)
+
+openai.api_key = config('OPENAI_API_KEY')
+
+
+def get_chatbot_response(message, transcript):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message},
+            {"role": "system", "content": transcript},
+        ]
+    )
+    return response['choices'][0]['message']['content']
+
 
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
@@ -32,6 +48,10 @@ class RegisterView(generic.CreateView):
 def learn_now(request):
     video_url = f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{settings.AZURE_STORAGE_CONTAINER_NAME}/Introduction_to_Data_and_Data_Science_Final.mp4"
     transcripts = list_blobs()
+
+    if not transcripts:
+        messages.warning(request, "Unable to retrieve transcript list. Please try again later.")
+
     return render(request, 'feedback/learn_now.html', {
         'video_url': video_url,
         'transcripts': transcripts
@@ -285,15 +305,16 @@ def get_transcript(request, blob_name):
 
 
 @csrf_exempt
-@require_POST
 def chatbot(request):
-    data = json.loads(request.body)
-    message = data.get('message')
-    transcript_name = data.get('transcript_name')
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+        transcript_name = data.get('transcript_name')
 
-    if not message or not transcript_name:
-        return JsonResponse({'error': 'No message or transcript name provided'}, status=400)
+        if not message or not transcript_name:
+            return JsonResponse({'error': 'No message or transcript name provided'}, status=400)
 
-    transcript = download_file(transcript_name)
-    response = get_chatbot_response(message, transcript)
-    return JsonResponse({'response': response})
+        transcript = download_file(transcript_name)
+        response = get_chatbot_response(message, transcript)
+        return JsonResponse({'response': response})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
