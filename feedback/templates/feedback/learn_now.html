@@ -2,49 +2,65 @@
 {% load static %}
 
 {% block extra_head %}
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="{% static 'js/chatbot.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    <h2>Learn Now</h2>
-    <p>Watch the Introduction to Data and Data Science video:</p>
+    <h2 class="text-2xl font-bold mb-4">Learn Now</h2>
+    <p class="mb-4">Watch the Introduction to Data and Data Science video:</p>
 
     <div class="video-container mt-4">
-        <video id="myVideo" width="600" controls>
+        <video id="myVideo" width="600" controls class="mb-4">
             <source src="{{ video_url }}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
     </div>
 
     <div class="mt-4">
-        <h3>Upload Transcript</h3>
-        <input type="file" id="transcript-file" accept=".txt,.vtt">
-        <button onclick="uploadTranscript()">Upload</button>
+        <h3 class="text-xl font-semibold mb-2">Upload Transcript</h3>
+        <input type="file" id="transcript-file" accept=".txt,.vtt" class="mb-2">
+        <button onclick="uploadTranscript()" class="bg-blue-500 text-white px-4 py-2 rounded">Upload</button>
     </div>
 
     <div class="mt-4">
-        <h3>Select Transcript</h3>
-        <select id="transcript-select">
+        <h3 class="text-xl font-semibold mb-2">Select Transcript</h3>
+        <select id="transcript-select" class="border p-2 rounded">
             {% for transcript in transcripts %}
                 <option value="{{ transcript }}">{{ transcript }}</option>
             {% endfor %}
         </select>
     </div>
-
-    <!-- The chatbot will be inserted here by the JavaScript -->
 {% endblock %}
 
 {% block script %}
     <script>
-        console.log('Chatbot script loaded');
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded');
-            if (document.getElementById('chatbot')) {
-                console.log('Chatbot element found');
-            } else {
-                console.log('Chatbot element not found');
+        function uploadTranscript() {
+            const fileInput = document.getElementById('transcript-file');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
             }
-        });
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('{% url "upload_transcript" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while uploading the transcript');
+                });
+        }
     </script>
 {% endblock %}

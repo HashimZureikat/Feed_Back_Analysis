@@ -5,46 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Feedback Analysis{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
 </head>
-<body>
-<div class="container">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{% url 'home' %}">Feedback Analysis</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'analyze_feedback' %}">Analyze Feedback</a>
-                </li>
-                {% if user.is_authenticated %}
-                    {% if not request.path == '/feedback/register/' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
-                        </li>
-                    {% endif %}
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'custom_login' %}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'register' %}">Register</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
-    <main role="main" class="container">
-        {% block content %}
-        {% endblock %}
-    </main>
-</div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+<body class="bg-gray-100">
+<nav class="bg-blue-600 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="{% url 'home' %}" class="text-2xl font-bold">Feedback Analysis</a>
+        <ul class="flex space-x-4">
+            <li><a href="{% url 'home' %}" class="hover:text-blue-200">Home</a></li>
+            <li><a href="{% url 'analyze_feedback' %}" class="hover:text-blue-200">Analyze Feedback</a></li>
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'logout' %}" class="hover:text-blue-200">Logout</a></li>
+            {% else %}
+                <li><a href="{% url 'custom_login' %}" class="hover:text-blue-200">Login</a></li>
+                <li><a href="{% url 'register' %}" class="hover:text-blue-200">Register</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<main class="container mx-auto mt-8 p-4 bg-white shadow-md rounded-lg">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-gray-200 text-center p-4 mt-8">
+    <p>&copy; 2024 Feedback Analysis. All rights reserved.</p>
+</footer>
+
+{% block script %}{% endblock %}
 </body>
 </html>

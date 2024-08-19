@@ -87,9 +87,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    BASE_DIR / 'frontend' / 'build' / 'static',
+    BASE_DIR / 'frontend' / 'static',
     ]
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
