@@ -3,64 +3,51 @@
 
 {% block extra_head %}
     <script src="{% static 'js/chatbot.js' %}"></script>
+    <style>
+        .learn-now-container {
+            position: relative;
+        }
+        #chatbot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-    <h2 class="text-2xl font-bold mb-4">Learn Now</h2>
-    <p class="mb-4">Watch the Introduction to Data and Data Science video:</p>
+    <div class="learn-now-container">
+        <h2 class="text-2xl font-bold mb-4">Learn Now</h2>
+        <p class="mb-4">Watch the Introduction to Data and Data Science video:</p>
 
-    <div class="video-container mt-4">
-        <video id="myVideo" width="600" controls class="mb-4">
-            <source src="{{ video_url }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
+        <div class="video-container mt-4">
+            <video id="myVideo" width="600" controls class="mb-4">
+                <source src="{{ video_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
 
-    <div class="mt-4">
-        <h3 class="text-xl font-semibold mb-2">Upload Transcript</h3>
-        <input type="file" id="transcript-file" accept=".txt,.vtt" class="mb-2">
-        <button onclick="uploadTranscript()" class="bg-blue-500 text-white px-4 py-2 rounded">Upload</button>
-    </div>
+        <div class="mt-4">
+            <h3 class="text-xl font-semibold mb-2">Upload Transcript</h3>
+            <input type="file" id="transcript-file" accept=".txt,.vtt" class="mb-2">
+            <button onclick="uploadTranscript()" class="bg-blue-500 text-white px-4 py-2 rounded">Upload</button>
+        </div>
 
-    <div class="mt-4">
-        <h3 class="text-xl font-semibold mb-2">Select Transcript</h3>
-        <select id="transcript-select" class="border p-2 rounded">
-            {% for transcript in transcripts %}
-                <option value="{{ transcript }}">{{ transcript }}</option>
-            {% endfor %}
-        </select>
+        <div class="mt-4">
+            <h3 class="text-xl font-semibold mb-2">Select Transcript</h3>
+            <select id="transcript-select" class="border p-2 rounded">
+                {% for transcript in transcripts %}
+                    <option value="{{ transcript }}">{{ transcript }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Chatbot will be inserted here by JavaScript -->
+        <div id="chatbot"></div>
     </div>
 {% endblock %}
 
 {% block script %}
-    <script>
-        function uploadTranscript() {
-            const fileInput = document.getElementById('transcript-file');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file to upload');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch('{% url "upload_transcript" %}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while uploading the transcript');
-                });
-        }
-    </script>
+    <!-- Your existing script for uploadTranscript() -->
 {% endblock %}
