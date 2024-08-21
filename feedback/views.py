@@ -291,9 +291,11 @@ def upload_transcript(request):
     file_content = file.read()
     file_name = file.name
 
-    upload_file(file_content, file_name)
-
-    return JsonResponse({'message': 'File uploaded successfully'})
+    success = upload_file(file_content, file_name)
+    if success:
+        return JsonResponse({'message': 'File uploaded successfully'})
+    else:
+        return JsonResponse({'error': 'Failed to upload file'}, status=500)
 
 
 def get_transcript(request, blob_name):
@@ -315,6 +317,30 @@ def chatbot(request):
             return JsonResponse({'error': 'No message or transcript name provided'}, status=400)
 
         transcript = download_file(transcript_name)
+        if transcript is None:
+            return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
+
         response = get_chatbot_response(message, transcript)
         return JsonResponse({'response': response})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@csrf_exempt
+@require_POST
+def summarize_lesson(request):
+    data = json.loads(request.body)
+    transcript_name = data.get('transcript_name')
+
+    if not transcript_name:
+        return JsonResponse({'error': 'No transcript name provided'}, status=400)
+
+    transcript = download_file(transcript_name)
+
+    if transcript is None:
+        return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
+
+    try:
+        summary = get_chatbot_response("Please provide a concise summary of the following lesson transcript: " + transcript, "")
+        return JsonResponse({'summary': summary})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

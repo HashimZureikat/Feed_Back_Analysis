@@ -1,21 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     const chatbotHTML = `
-        <button id="chatbot-toggle" class="bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600">
+        <button id="chatbot-toggle" class="bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 absolute bottom-4 right-4 z-10">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
         </button>
-        <div id="chatbot-window" class="hidden bg-white rounded-lg shadow-xl w-80 h-96 flex flex-col absolute top-12 right-0">
+        <div id="chatbot-window" class="hidden absolute inset-4 bg-white z-20 flex flex-col shadow-2xl rounded-lg" style="width: 600px; right: 20px; bottom: 80px; top: auto; left: auto; height: 480px;">
             <div class="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
-                <h3 class="font-bold">Chatbot</h3>
-                <button id="chatbot-close">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <h3 class="font-bold text-xl">Chatbot</h3>
+                <button id="chatbot-close" class="text-2xl">&times;</button>
             </div>
             <div id="chatbot-messages" class="flex-1 overflow-y-auto p-4"></div>
-            <div class="p-4 border-t">
+            <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
+                <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
+                <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
+            </div>
+            <div id="chatbot-input-area" class="p-4 border-t hidden">
                 <div class="flex">
                     <input id="chatbot-input" type="text" class="flex-1 border rounded-l-lg p-2" placeholder="Type a message...">
                     <button id="chatbot-send" class="bg-blue-500 text-white rounded-r-lg px-4 py-2">Send</button>
@@ -24,9 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     `;
 
-    // Assuming you have a container element with the ID 'chatbot'
     const chatbotContainer = document.getElementById('chatbot');
-    chatbotContainer.innerHTML = chatbotHTML;
+    if (chatbotContainer) {
+        chatbotContainer.innerHTML = chatbotHTML;
+    } else {
+        console.error('Chatbot container not found');
+        return;
+    }
 
     const chatbotToggle = document.getElementById('chatbot-toggle');
     const chatbotWindow = document.getElementById('chatbot-window');
@@ -34,13 +38,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatbotInput = document.getElementById('chatbot-input');
     const chatbotSend = document.getElementById('chatbot-send');
     const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotOptions = document.getElementById('chatbot-options');
+    const chatbotInputArea = document.getElementById('chatbot-input-area');
+    const qaOption = document.getElementById('qa-option');
+    const summarizeOption = document.getElementById('summarize-option');
+
+    let isFirstInteraction = true;
 
     chatbotToggle.addEventListener('click', () => {
         chatbotWindow.classList.toggle('hidden');
+        if (isFirstInteraction) {
+            chatbotOptions.classList.remove('hidden');
+            chatbotInputArea.classList.add('hidden');
+        } else {
+            chatbotOptions.classList.add('hidden');
+            chatbotInputArea.classList.remove('hidden');
+        }
     });
 
     chatbotClose.addEventListener('click', () => {
         chatbotWindow.classList.add('hidden');
+    });
+
+    qaOption.addEventListener('click', () => {
+        handleOption('Q&A');
+    });
+
+    summarizeOption.addEventListener('click', () => {
+        handleOption('Summarize Lesson');
     });
 
     chatbotSend.addEventListener('click', sendMessage);
@@ -50,13 +75,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function handleOption(option) {
+        console.log('Handling option:', option);
+        isFirstInteraction = false;
+        chatbotOptions.classList.add('hidden');
+        chatbotInputArea.classList.remove('hidden');
+        appendMessage('user', `Selected option: ${option}`);
+
+        if (option === 'Q&A') {
+            appendMessage('bot', "Great! I'm ready to answer your questions about the lesson. What would you like to know?");
+        } else if (option === 'Summarize Lesson') {
+            appendMessage('bot', "I'll summarize the lesson for you. Please give me a moment...");
+
+            fetch('/feedback/summarize_lesson/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    transcript_name: document.querySelector('#transcript-select').value
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    appendMessage('bot', data.summary);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson: ' + error.message);
+                });
+        }
+    }
+
     function sendMessage() {
         const message = chatbotInput.value.trim();
         if (message) {
             appendMessage('user', message);
             chatbotInput.value = '';
 
-            // Send message to Django backend
             fetch('/feedback/chatbot/', {
                 method: 'POST',
                 headers: {
@@ -65,16 +125,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     message: message,
-                    transcript_name: document.querySelector('select') ? document.querySelector('select').value : ''
+                    transcript_name: document.querySelector('#transcript-select') ? document.querySelector('#transcript-select').value : ''
                 })
             })
                 .then(response => response.json())
                 .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
                     appendMessage('bot', data.response);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    appendMessage('bot', 'Sorry, I encountered an error.');
+                    appendMessage('bot', 'Sorry, I encountered an error: ' + error.message);
                 });
         }
     }

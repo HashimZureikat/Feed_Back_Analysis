@@ -19,4 +19,5 @@ urlpatterns = [
     path('upload_transcript/', views.upload_transcript, name='upload_transcript'),
     path('get_transcript/<str:blob_name>/', views.get_transcript, name='get_transcript'),
     path('chatbot/', views.chatbot, name='chatbot'),
+    path('summarize_lesson/', views.summarize_lesson, name='summarize_lesson'),
 ]
