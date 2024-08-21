@@ -41,6 +41,10 @@ h1 {
     margin-bottom: 5px;
 }
 
+#chatbot-messages p {
+    margin-bottom: 10px;
+}
+
 #chatbot-messages h3 {
     font-size: 1.1em;
     font-weight: bold;
@@ -51,3 +55,10 @@ h1 {
 #chatbot-messages strong {
     font-weight: bold;
 }
+
+#chatbot-window {
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+

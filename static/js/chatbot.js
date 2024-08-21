@@ -142,12 +142,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     function appendMessage(sender, content) {
         const messageElement = document.createElement('div');
         messageElement.className = `mb-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
         messageElement.innerHTML = `
         <div class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
-            ${content}
+            ${sender === 'bot' ? sanitizeAndFormatHTML(content) : content}
         </div>
     `;
         chatbotMessages.appendChild(messageElement);
@@ -171,3 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+function sanitizeAndFormatHTML(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const sanitized = doc.body.textContent || "";
+    return sanitized.replace(/\n/g, '<br>').replace(/- /g, '• ');
+}

@@ -6,7 +6,10 @@ from django.conf import settings
 def get_chatbot_response(message, transcript):
     system_message = (
         "You are an AI assistant helping students understand educational content. "
-        "When summarizing lessons, present information in a clear, concise manner using bullet points or numbered lists. "
+        "When summarizing lessons, present information in a clear, concise manner using HTML formatting. "
+        "Use <ul> for unordered lists and <li> for list items. "
+        "Use <p> tags for paragraphs and <br> for line breaks. "
+        "Use <strong> for emphasis. "
         "Focus on key topics, concepts, and takeaways without referencing any source material. "
         "Provide standalone summaries that appear as direct overviews of the lesson content."
     )
@@ -20,4 +23,3 @@ def get_chatbot_response(message, transcript):
         ]
     )
     return response['choices'][0]['message']['content']
-
