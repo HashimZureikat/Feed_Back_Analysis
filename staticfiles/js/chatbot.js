@@ -146,10 +146,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageElement = document.createElement('div');
         messageElement.className = `mb-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
         messageElement.innerHTML = `
-            <span class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
-                ${content}
-            </span>
-        `;
+        <div class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
+            ${content}
+        </div>
+    `;
         chatbotMessages.appendChild(messageElement);
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
     }
@@ -169,3 +169,5 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 });
+
+

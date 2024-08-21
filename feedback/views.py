@@ -26,22 +26,6 @@ logger = logging.getLogger(__name__)
 openai.api_key = config('OPENAI_API_KEY')
 
 
-def get_chatbot_response(message, transcript):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": message},
-            {"role": "system", "content": transcript},
-        ]
-    )
-    return response['choices'][0]['message']['content']
-
-
-class RegisterView(generic.CreateView):
-    form_class = CustomUserCreationForm
-    success_url = reverse_lazy('custom_login')
-    template_name = 'feedback/registration/register.html'
 
 
 @login_required
@@ -56,6 +40,31 @@ def learn_now(request):
         'video_url': video_url,
         'transcripts': transcripts
     })
+
+
+def get_chatbot_response(message, transcript):
+    system_message = (
+        "You are an AI assistant helping students understand educational content. "
+        "When summarizing lessons, present information in a clear, concise manner using bullet points or numbered lists. "
+        "Focus on key topics, concepts, and takeaways without referencing any source material. "
+        "Provide standalone summaries that appear as direct overviews of the lesson content."
+    )
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": message},
+            {"role": "system", "content": transcript},
+        ]
+    )
+    return response['choices'][0]['message']['content']
+
+
+class RegisterView(generic.CreateView):
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('custom_login')
+    template_name = 'feedback/registration/register.html'
 
 
 def custom_login(request):
@@ -325,6 +334,9 @@ def chatbot(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
+
+
+
 @csrf_exempt
 @require_POST
 def summarize_lesson(request):
@@ -340,7 +352,15 @@ def summarize_lesson(request):
         return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
 
     try:
-        summary = get_chatbot_response("Please provide a concise summary of the following lesson transcript: " + transcript, "")
+        summary_prompt = (
+            "Provide a clear and concise summary of the following lesson content. "
+            "Focus on key topics, concepts, and main takeaways. "
+            "Present the summary in a well-structured format using bullet points or a numbered list. "
+            "Do not reference any source material or mention that this is based on a transcript or video. "
+            "The summary should appear as a standalone overview of the lesson itself.\n\n"
+            f"{transcript}"
+        )
+        summary = get_chatbot_response(summary_prompt, "")
         return JsonResponse({'summary': summary})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

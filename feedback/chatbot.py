@@ -4,16 +4,20 @@ from langchain.memory import ConversationBufferMemory
 from django.conf import settings
 
 def get_chatbot_response(message, transcript):
-    llm = ChatOpenAI(temperature=0.7, openai_api_key=settings.OPENAI_API_KEY)
-    memory = ConversationBufferMemory()
-    conversation = ConversationChain(
-        llm=llm,
-        memory=memory,
-        verbose=True
+    system_message = (
+        "You are an AI assistant helping students understand educational content. "
+        "When summarizing lessons, present information in a clear, concise manner using bullet points or numbered lists. "
+        "Focus on key topics, concepts, and takeaways without referencing any source material. "
+        "Provide standalone summaries that appear as direct overviews of the lesson content."
     )
 
-    context = f"You are an AI assistant helping a student understand a video lecture. Here's the transcript of the video: {transcript}\n\nNow, answer the following question or perform the requested task:"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": message},
+            {"role": "system", "content": transcript},
+        ]
+    )
+    return response['choices'][0]['message']['content']
 
-    full_message = context + message
-    response = conversation.predict(input=full_message)
-    return response
