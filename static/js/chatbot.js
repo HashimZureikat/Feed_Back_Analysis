@@ -1,28 +1,28 @@
 document.addEventListener('DOMContentLoaded', function() {
     const chatbotHTML = `
-        <button id="chatbot-toggle" class="bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 absolute bottom-4 right-4 z-10">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-        </button>
-        <div id="chatbot-window" class="hidden absolute inset-4 bg-white z-20 flex flex-col shadow-2xl rounded-lg" style="width: 600px; right: 20px; bottom: 80px; top: auto; left: auto; height: 480px;">
-            <div class="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
-                <h3 class="font-bold text-xl">Chatbot</h3>
-                <button id="chatbot-close" class="text-2xl">&times;</button>
-            </div>
-            <div id="chatbot-messages" class="flex-1 overflow-y-auto p-4"></div>
-            <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
-                <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
-                <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
-            </div>
-            <div id="chatbot-input-area" class="p-4 border-t hidden">
-                <div class="flex">
-                    <input id="chatbot-input" type="text" class="flex-1 border rounded-l-lg p-2" placeholder="Type a message...">
-                    <button id="chatbot-send" class="bg-blue-500 text-white rounded-r-lg px-4 py-2">Send</button>
-                </div>
+    <button id="chatbot-toggle" class="bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 absolute bottom-4 right-4 z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+    </button>
+    <div id="chatbot-window" class="hidden absolute inset-4 bg-white z-20 flex flex-col shadow-2xl rounded-lg" style="width: 600px; right: 20px; bottom: 80px; top: auto; left: auto; height: 480px;">
+        <div class="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold text-xl">Chatbot</h3>
+            <button id="chatbot-close" class="text-2xl">&times;</button>
+        </div>
+        <div id="chatbot-messages" class="flex-1 overflow-y-auto p-4"></div>
+        <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
+            <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
+            <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
+        </div>
+        <div id="chatbot-input-area" class="p-4 border-t hidden">
+            <div class="flex">
+                <input id="chatbot-input" type="text" class="flex-1 border rounded-l-lg p-2" placeholder="Type a message...">
+                <button id="chatbot-send" class="bg-blue-500 text-white rounded-r-lg px-4 py-2">Send</button>
             </div>
         </div>
-    `;
+    </div>
+`;
 
     const chatbotContainer = document.getElementById('chatbot');
     if (chatbotContainer) {
@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isFirstInteraction) {
             chatbotOptions.classList.remove('hidden');
             chatbotInputArea.classList.add('hidden');
+            appendMessage('bot', "Welcome to your AI study assistant! I'm here to help you understand the course material better. Choose an option below to get started:");
+            appendMessage('bot', "• Q&A: Ask me any question about the lesson content.<br>• Summarize Lesson: Get a concise overview of the key points.");
         } else {
             chatbotOptions.classList.add('hidden');
             chatbotInputArea.classList.remove('hidden');
@@ -74,6 +76,14 @@ document.addEventListener('DOMContentLoaded', function() {
             sendMessage();
         }
     });
+
+    function openChatbot() {
+        chatbotWindow.classList.remove('hidden');
+        appendMessage('bot', "Welcome! I'm your AI study buddy. I can summarize lessons or answer questions about the course material. How can I help you today?");
+        chatbotOptions.classList.remove('hidden');
+        chatbotInputArea.classList.add('hidden');
+    }
+
 
     function handleOption(option) {
         console.log('Handling option:', option);
@@ -106,10 +116,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson: ' + error.message);
+                    appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson. Please try again later or contact support if the problem persists.');
                 });
         }
     }
+
 
     function sendMessage() {
         const message = chatbotInput.value.trim();
@@ -148,11 +159,20 @@ document.addEventListener('DOMContentLoaded', function() {
         messageElement.className = `mb-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
         messageElement.innerHTML = `
         <div class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
-            ${sender === 'bot' ? sanitizeAndFormatHTML(content) : content}
+            ${sender === 'bot' ? content : escapeHtml(content)}
         </div>
     `;
         chatbotMessages.appendChild(messageElement);
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     function getCookie(name) {

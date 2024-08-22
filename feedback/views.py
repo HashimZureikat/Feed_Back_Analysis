@@ -20,13 +20,18 @@ import json
 from .azure_storage import upload_file, download_file, list_blobs
 import openai
 from decouple import config
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.llms import Ollama
+from langchain import hub
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
 
 logger = logging.getLogger(__name__)
 
 openai.api_key = config('OPENAI_API_KEY')
-
-
-
 
 @login_required
 def learn_now(request):
@@ -40,7 +45,6 @@ def learn_now(request):
         'video_url': video_url,
         'transcripts': transcripts
     })
-
 
 def get_chatbot_response(message, transcript):
     system_message = (
@@ -60,12 +64,10 @@ def get_chatbot_response(message, transcript):
     )
     return response['choices'][0]['message']['content']
 
-
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
-
 
 def custom_login(request):
     if request.method == 'POST':
@@ -78,7 +80,6 @@ def custom_login(request):
         else:
             messages.error(request, 'Invalid username or password.')
     return render(request, 'feedback/registration/login.html')
-
 
 @login_required
 def home(request):
@@ -98,7 +99,6 @@ def home(request):
     language = request.COOKIES.get('language', 'en')
     return render(request, 'feedback/choice_page.html', {'theme': theme, 'language': language})
 
-
 @login_required
 def submit_feedback(request):
     if request.method == 'POST':
@@ -109,14 +109,12 @@ def submit_feedback(request):
             return redirect('feedback_list')
     return render(request, 'feedback/submit_feedback.html')
 
-
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
     logger.info(f"Retrieved {feedbacks.count()} feedbacks")
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
-
 
 @login_required
 @user_passes_test(lambda u: u.role == 'manager' or u.role == 'admin')
@@ -129,7 +127,6 @@ def review_feedback(request, feedback_id):
         logger.info(f"Feedback {feedback_id} reviewed with status: {feedback.status}")
     return redirect('feedback_list')
 
-
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def approve_feedback(request, feedback_id):
@@ -140,7 +137,6 @@ def approve_feedback(request, feedback_id):
         feedback.save()
         logger.info(f"Feedback {feedback_id} approved with status: {feedback.status}")
     return redirect('feedback_list')
-
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -153,7 +149,6 @@ def reject_feedback(request, feedback_id):
         logger.info(f"Feedback {feedback_id} rejected with status: {feedback.status}")
     return redirect('feedback_list')
 
-
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def clear_feedback_history(request):
@@ -163,7 +158,6 @@ def clear_feedback_history(request):
         logger.info("All feedback history cleared")
         return redirect('feedback_list')
 
-
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
     endpoint = settings.AZURE_SENTIMENT_ENDPOINT
@@ -172,7 +166,6 @@ def authenticate_client():
         raise ValueError("Azure environment variables are not set correctly.")
     credentials = AzureKeyCredential(key)
     return TextAnalyticsClient(endpoint=endpoint, credential=credentials)
-
 
 def extract_key_phrases(client, documents):
     response = client.extract_key_phrases(documents=documents)
@@ -184,7 +177,6 @@ def extract_key_phrases(client, documents):
         else:
             key_phrases_results.append({"key_phrases": doc.key_phrases})
     return key_phrases_results
-
 
 @login_required
 def analyze_feedback(request):
@@ -266,10 +258,8 @@ def analyze_feedback(request):
     else:
         return render(request, 'feedback/form.html')
 
-
 def choice_page(request):
     return render(request, 'feedback/choice_page.html')
-
 
 @csrf_exempt
 @require_POST
@@ -279,7 +269,6 @@ def set_theme(request):
     messages.success(request, f'Theme set to {theme}.')
     return redirect('home')
 
-
 @csrf_exempt
 @require_POST
 def set_language(request):
@@ -288,7 +277,6 @@ def set_language(request):
     response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)
     messages.success(request, f'Language set to {language}.')
     return response
-
 
 @csrf_exempt
 @require_POST
@@ -306,14 +294,12 @@ def upload_transcript(request):
     else:
         return JsonResponse({'error': 'Failed to upload file'}, status=500)
 
-
 def get_transcript(request, blob_name):
     try:
         transcript = download_file(blob_name)
         return JsonResponse({'transcript': transcript})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
 
 @csrf_exempt
 def chatbot(request):
@@ -329,13 +315,28 @@ def chatbot(request):
         if transcript is None:
             return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
 
-        response = get_chatbot_response(message, transcript)
+        # Set up Llama model
+        llm = Ollama(model="llama2")
+
+        # Create a custom prompt template
+        qa_template = """
+        Based on the following lesson transcript, answer the user's question:
+
+        Transcript: {transcript}
+
+        User question: {question}
+
+        Answer:
+        """
+        qa_prompt = PromptTemplate(template=qa_template, input_variables=["transcript", "question"])
+
+        # Create the QA chain
+        qa_chain = LLMChain(llm=llm, prompt=qa_prompt)
+
+        # Get response
+        response = qa_chain.run(transcript=transcript, question=message)
         return JsonResponse({'response': response})
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
-
-
 
 @csrf_exempt
 @require_POST
@@ -352,15 +353,39 @@ def summarize_lesson(request):
         return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
 
     try:
-        summary_prompt = (
-            "Provide a clear and concise summary of the following lesson content. "
-            "Focus on key topics, concepts, and main takeaways. "
-            "Present the summary in a well-structured format using bullet points or a numbered list. "
-            "Do not reference any source material or mention that this is based on a transcript or video. "
-            "The summary should appear as a standalone overview of the lesson itself.\n\n"
-            f"{transcript}"
-        )
-        summary = get_chatbot_response(summary_prompt, "")
+        llm = Ollama(model="llama2")
+
+        summary_template = """
+Summarize the key concepts and ideas from the lesson content below, ensuring a clear and concise presentation. Follow these guidelines:
+
+1. **Use "This Lesson" Language:**
+   - Refer to the content as "this lesson" rather than "the video."
+
+2. **Clear and Structured Points:**
+   - Present the information as distinct bullet points.
+   - Ensure each point is concise and easy to understand.
+
+3. **Focus on Key Concepts:**
+   - Cover all major topics and subtopics mentioned in the content.
+   - Clearly differentiate between traditional methods and machine learning, emphasizing their roles and differences in business intelligence and data science.
+
+4. **Objective and Neutral Tone:**
+   - Avoid adopting any tone or perspective that suggests the content is part of a video or that it’s being explained by an instructor.
+   - Keep the tone neutral and impersonal, focusing purely on the facts.
+
+Content:
+{transcript}
+
+Summary Points:
+"""
+
+
+        summary_prompt = PromptTemplate(template=summary_template, input_variables=["transcript"])
+
+        summary_chain = LLMChain(llm=llm, prompt=summary_prompt)
+
+        summary = summary_chain.run(transcript=transcript)
         return JsonResponse({'summary': summary})
     except Exception as e:
+        logger.error(f"Error in summarize_lesson: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)

@@ -2,6 +2,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from django.conf import settings
+import openai
 
 def get_chatbot_response(message, transcript):
     system_message = (
