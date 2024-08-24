@@ -71,6 +71,13 @@ DATABASES = {
     }
 }
 
+COSMOS_DB = {
+    'ENDPOINT': config('COSMOS_DB_ENDPOINT'),
+    'PRIMARY_KEY': config('COSMOS_DB_PRIMARY_KEY'),
+    'DATABASE': 'SentimentAnalysisDB',
+    'CONTAINER': 'FeedbackResults'
+}
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -86,8 +93,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-    BASE_DIR / 'frontend' / 'static',
+    BASE_DIR / 'static'
     ]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -104,6 +110,6 @@ AZURE_STORAGE_ACCOUNT_NAME = config('AZURE_STORAGE_ACCOUNT_NAME')
 AZURE_STORAGE_ACCOUNT_KEY = config('AZURE_STORAGE_ACCOUNT_KEY')
 AZURE_STORAGE_CONTAINER_NAME = config('AZURE_STORAGE_CONTAINER_NAME')
 AZURE_STORAGE_CONTAINER_TRANSCRIPT = config('AZURE_STORAGE_CONTAINER_TRANSCRIPT', default='transcript')
-AZURE_STORAGE_CONNECTION_STRING = f"DefaultEndpointsProtocol=https;AccountName={AZURE_STORAGE_ACCOUNT_NAME};AccountKey={AZURE_STORAGE_ACCOUNT_KEY};EndpointSuffix=core.windows.net"
+AZURE_STORAGE_CONNECTION_STRING = config('AZURE_STORAGE_CONNECTION_STRING')
 
 OPENAI_API_KEY = config('OPENAI_API_KEY')
