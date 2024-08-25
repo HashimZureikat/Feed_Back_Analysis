@@ -124,18 +124,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (data.error) {
                             throw new Error(data.error);
                         }
-                        appendMessage('bot', data.message || "Thank you for your feedback. It has been submitted and analyzed.");
+                        appendMessage('bot', "Thank you for your feedback. Here's the analysis:");
+                        appendMessage('bot', `Overall Sentiment: ${data.analysis.overall_sentiment}`);
+                        appendMessage('bot', `Confidence Scores: 
+            Positive: ${data.analysis.confidence_scores.positive.toFixed(2)}, 
+            Neutral: ${data.analysis.confidence_scores.neutral.toFixed(2)}, 
+            Negative: ${data.analysis.confidence_scores.negative.toFixed(2)}`);
+                        appendMessage('bot', `Key Phrases: ${data.analysis.key_phrases.join(', ')}`);
+
+                        if (data.analysis.opinions.length > 0) {
+                            appendMessage('bot', "Opinions:");
+                            data.analysis.opinions.forEach(opinion => {
+                                appendMessage('bot', `- Target: ${opinion.target}, Sentiment: ${opinion.sentiment}`);
+                                opinion.assessments.forEach(assessment => {
+                                    appendMessage('bot', `  - ${assessment.text}: ${assessment.sentiment}`);
+                                });
+                            });
+                        }
                         // Return to main options
                         setTimeout(() => {
                             chatbotInputArea.classList.add('hidden');
                             chatbotOptions.classList.remove('hidden');
                             currentAction = '';
                             appendMessage('bot', "Is there anything else I can help you with? Please choose an option:");
-                        }, 2000);
+                        }, 5000);  // Increased timeout to allow time to read the analysis
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        appendMessage('bot', 'Sorry, I encountered an error while submitting your feedback.');
+                        appendMessage('bot', 'Sorry, I encountered an error while analyzing your feedback.');
                     });
             } else if (currentAction === 'Request Assistance') {
                 fetch('/feedback/submit_assistance/', {

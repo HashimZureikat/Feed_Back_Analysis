@@ -23,6 +23,11 @@ import openai
 from decouple import config
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
+from .azure_storage import list_blobs
+from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import render
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +124,10 @@ def analyze_feedback_bot(request):
 
             client = authenticate_client()
 
+            # Sentiment analysis with opinion mining
             sentiment_response = client.analyze_sentiment(documents=[feedback_text], show_opinion_mining=True)[0]
+
+            # Key phrase extraction
             key_phrases_response = client.extract_key_phrases(documents=[feedback_text])[0]
 
             if sentiment_response.is_error or key_phrases_response.is_error:
@@ -129,6 +137,26 @@ def analyze_feedback_bot(request):
             sentiment_scores = sentiment_response.confidence_scores
             key_phrases = key_phrases_response.key_phrases
 
+            # Process opinions
+            opinions = []
+            for sentence in sentiment_response.sentences:
+                for mined_opinion in sentence.mined_opinions:
+                    target = mined_opinion.target
+                    assessments = [{
+                        'text': assessment.text,
+                        'sentiment': assessment.sentiment,
+                        'confidence_scores': {
+                            'positive': assessment.confidence_scores.positive,
+                            'neutral': assessment.confidence_scores.neutral,
+                            'negative': assessment.confidence_scores.negative
+                        }
+                    } for assessment in mined_opinion.assessments]
+                    opinions.append({
+                        'target': target.text,
+                        'sentiment': target.sentiment,
+                        'assessments': assessments
+                    })
+
             cosmos_data = {
                 'id': str(uuid.uuid4()),
                 'feedback_text': feedback_text,
@@ -137,32 +165,35 @@ def analyze_feedback_bot(request):
                 'confidence_score_neutral': sentiment_scores.neutral,
                 'confidence_score_negative': sentiment_scores.negative,
                 'key_phrases': key_phrases,
+                'opinions': opinions,
                 'timestamp': datetime.utcnow().isoformat(),
                 'user_id': str(request.user.id) if request.user.is_authenticated else 'anonymous'
             }
 
             cosmos_db.store_feedback(cosmos_data)
 
-            return JsonResponse({'status': 'success', 'message': 'Feedback submitted and analyzed successfully'})
+            response_data = {
+                'status': 'success',
+                'message': 'Feedback submitted and analyzed successfully',
+                'analysis': {
+                    'overall_sentiment': overall_sentiment,
+                    'confidence_scores': {
+                        'positive': sentiment_scores.positive,
+                        'neutral': sentiment_scores.neutral,
+                        'negative': sentiment_scores.negative
+                    },
+                    'key_phrases': key_phrases,
+                    'opinions': opinions
+                }
+            }
+
+            return JsonResponse(response_data)
 
         except Exception as e:
             logger.error(f"Error in analyze_feedback_bot: {str(e)}", exc_info=True)
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
-
-@login_required
-def learn_now(request):
-    video_url = f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{settings.AZURE_STORAGE_CONTAINER_NAME}/Introduction_to_Data_and_Data_Science_Final.mp4"
-    transcripts = list_blobs()
-
-    if not transcripts:
-        messages.warning(request, "Unable to retrieve transcript list. Please try again later.")
-
-    return render(request, 'feedback/learn_now.html', {
-        'video_url': video_url,
-        'transcripts': transcripts
-    })
 
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
@@ -408,3 +439,17 @@ def get_sentiment_summary(request):
     except Exception as e:
         logger.error(f"Error in get_sentiment_summary: {str(e)}", exc_info=True)
         return JsonResponse({'error': 'Failed to retrieve sentiment summary'}, status=500)
+
+
+@login_required
+def learn_now(request):
+    video_url = f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{settings.AZURE_STORAGE_CONTAINER_NAME}/Introduction_to_Data_and_Data_Science_Final.mp4"
+    transcripts = list_blobs()
+
+    if not transcripts:
+        messages.warning(request, "Unable to retrieve transcript list. Please try again later.")
+
+    return render(request, 'feedback/learn_now.html', {
+        'video_url': video_url,
+        'transcripts': transcripts
+    })
