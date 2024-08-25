@@ -26,4 +26,13 @@ class CosmosDBManager:
             logger.error(f"Error querying sentiment results: {str(e)}")
             raise
 
+    def store_feedback(self, feedback_data):
+        try:
+            result = self.container.create_item(body=feedback_data)
+            logger.info(f"Stored feedback: {result['id']}")
+            return result
+        except Exception as e:
+            logger.error(f"Error storing feedback: {str(e)}")
+            raise
+
 cosmos_db = CosmosDBManager()

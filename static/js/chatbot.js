@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
             <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
             <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
+            <button id="submit-feedback-option" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit Feedback</button>
             <button id="request-assistance-option" class="bg-red-500 text-white px-4 py-2 rounded">Request Assistance</button>
         </div>
         <div id="chatbot-input-area" class="p-4 border-t hidden">
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatbotInputArea = document.getElementById('chatbot-input-area');
     const qaOption = document.getElementById('qa-option');
     const summarizeOption = document.getElementById('summarize-option');
+    const submitFeedbackOption = document.getElementById('submit-feedback-option');
     const requestAssistanceOption = document.getElementById('request-assistance-option');
 
     let isFirstInteraction = true;
@@ -54,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chatbotOptions.classList.remove('hidden');
             chatbotInputArea.classList.add('hidden');
             appendMessage('bot', "Welcome to your AI study assistant! I'm here to help you understand the course material better. Choose an option below to get started:");
-            appendMessage('bot', "• Q&A: Ask me any question about the lesson content.<br>• Summarize Lesson: Get a concise overview of the key points.<br>• Request Assistance: Ask for help with any issues you're facing.");
+            appendMessage('bot', "• Q&A: Ask me any question about the lesson content.<br>• Summarize Lesson: Get a concise overview of the key points.<br>• Submit Feedback: Share your thoughts about the course.<br>• Request Assistance: Ask for help with any issues you're facing.");
         } else {
             chatbotOptions.classList.add('hidden');
             chatbotInputArea.classList.remove('hidden');
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     qaOption.addEventListener('click', () => handleOption('Q&A'));
     summarizeOption.addEventListener('click', () => handleOption('Summarize Lesson'));
+    submitFeedbackOption.addEventListener('click', () => handleOption('Submit Feedback'));
     requestAssistanceOption.addEventListener('click', () => handleOption('Request Assistance'));
 
     chatbotSend.addEventListener('click', sendMessage);
@@ -92,6 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 appendMessage('bot', "I'll summarize the lesson for you. Please give me a moment...");
                 summarizeLesson();
                 break;
+            case 'Submit Feedback':
+                appendMessage('bot', "We value your feedback! Please type your feedback below, and I'll submit it for analysis.");
+                break;
             case 'Request Assistance':
                 appendMessage('bot', "I'm here to help! Please describe the issue you're facing, and I'll make sure it's sent to our support team.");
                 break;
@@ -104,7 +110,34 @@ document.addEventListener('DOMContentLoaded', function() {
             appendMessage('user', message);
             chatbotInput.value = '';
 
-            if (currentAction === 'Request Assistance') {
+            if (currentAction === 'Submit Feedback') {
+                fetch('/feedback/analyze_feedback_bot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ feedback: message })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        appendMessage('bot', data.message || "Thank you for your feedback. It has been submitted and analyzed.");
+                        // Return to main options
+                        setTimeout(() => {
+                            chatbotInputArea.classList.add('hidden');
+                            chatbotOptions.classList.remove('hidden');
+                            currentAction = '';
+                            appendMessage('bot', "Is there anything else I can help you with? Please choose an option:");
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error while submitting your feedback.');
+                    });
+            } else if (currentAction === 'Request Assistance') {
                 fetch('/feedback/submit_assistance/', {
                     method: 'POST',
                     headers: {
