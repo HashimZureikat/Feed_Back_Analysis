@@ -116,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(data => {
                         appendMessage('bot', "Thank you for your request. Our support team will review it shortly.");
+                        // Return to main options
+                        setTimeout(() => {
+                            chatbotInputArea.classList.add('hidden');
+                            chatbotOptions.classList.remove('hidden');
+                            currentAction = '';
+                            appendMessage('bot', "Is there anything else I can help you with? Please choose an option:");
+                        }, 2000);
                     })
                     .catch(error => {
                         console.error('Error:', error);
