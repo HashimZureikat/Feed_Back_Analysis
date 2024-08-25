@@ -71,6 +71,7 @@ class RegisterView(generic.CreateView):
     template_name = 'feedback/registration/register.html'
 
 
+@login_required
 def custom_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -113,6 +114,28 @@ def submit_feedback(request):
             return redirect('feedback_list')
     return render(request, 'feedback/submit_feedback.html')
 
+
+@csrf_exempt
+def submit_assistance(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+
+        feedback = Feedback.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            text=message,
+            status='submitted',
+            is_assistance_request=True
+        )
+
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+# Update the feedback_list view
+def feedback_list(request):
+    feedbacks = Feedback.objects.all().order_by('-submitted_at')
+    return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
 
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])

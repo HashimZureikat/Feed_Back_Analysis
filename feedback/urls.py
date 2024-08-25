@@ -21,4 +21,5 @@ urlpatterns = [
     path('get_transcript/<str:blob_name>/', views.get_transcript, name='get_transcript'),
     path('chatbot/', views.chatbot, name='chatbot'),
     path('summarize_lesson/', views.summarize_lesson, name='summarize_lesson'),
+    path('submit_assistance/', views.submit_assistance, name='submit_assistance'),  # New URL for submitting assistance requests
 ]

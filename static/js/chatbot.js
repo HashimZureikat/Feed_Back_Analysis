@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
             <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
             <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
+            <button id="request-assistance-option" class="bg-red-500 text-white px-4 py-2 rounded">Request Assistance</button>
         </div>
         <div id="chatbot-input-area" class="p-4 border-t hidden">
             <div class="flex">
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     </div>
-`;
+    `;
 
     const chatbotContainer = document.getElementById('chatbot');
     if (chatbotContainer) {
@@ -42,8 +43,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatbotInputArea = document.getElementById('chatbot-input-area');
     const qaOption = document.getElementById('qa-option');
     const summarizeOption = document.getElementById('summarize-option');
+    const requestAssistanceOption = document.getElementById('request-assistance-option');
 
     let isFirstInteraction = true;
+    let currentAction = '';
 
     chatbotToggle.addEventListener('click', () => {
         chatbotWindow.classList.toggle('hidden');
@@ -51,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chatbotOptions.classList.remove('hidden');
             chatbotInputArea.classList.add('hidden');
             appendMessage('bot', "Welcome to your AI study assistant! I'm here to help you understand the course material better. Choose an option below to get started:");
-            appendMessage('bot', "• Q&A: Ask me any question about the lesson content.<br>• Summarize Lesson: Get a concise overview of the key points.");
+            appendMessage('bot', "• Q&A: Ask me any question about the lesson content.<br>• Summarize Lesson: Get a concise overview of the key points.<br>• Request Assistance: Ask for help with any issues you're facing.");
         } else {
             chatbotOptions.classList.add('hidden');
             chatbotInputArea.classList.remove('hidden');
@@ -62,13 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
         chatbotWindow.classList.add('hidden');
     });
 
-    qaOption.addEventListener('click', () => {
-        handleOption('Q&A');
-    });
-
-    summarizeOption.addEventListener('click', () => {
-        handleOption('Summarize Lesson');
-    });
+    qaOption.addEventListener('click', () => handleOption('Q&A'));
+    summarizeOption.addEventListener('click', () => handleOption('Summarize Lesson'));
+    requestAssistanceOption.addEventListener('click', () => handleOption('Request Assistance'));
 
     chatbotSend.addEventListener('click', sendMessage);
     chatbotInput.addEventListener('keypress', (e) => {
@@ -77,50 +76,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function openChatbot() {
-        chatbotWindow.classList.remove('hidden');
-        appendMessage('bot', "Welcome! I'm your AI study buddy. I can summarize lessons or answer questions about the course material. How can I help you today?");
-        chatbotOptions.classList.remove('hidden');
-        chatbotInputArea.classList.add('hidden');
-    }
-
-
     function handleOption(option) {
         console.log('Handling option:', option);
         isFirstInteraction = false;
         chatbotOptions.classList.add('hidden');
         chatbotInputArea.classList.remove('hidden');
         appendMessage('user', `Selected option: ${option}`);
+        currentAction = option;
 
-        if (option === 'Q&A') {
-            appendMessage('bot', "Great! I'm ready to answer your questions about the lesson. What would you like to know?");
-        } else if (option === 'Summarize Lesson') {
-            appendMessage('bot', "I'll summarize the lesson for you. Please give me a moment...");
-
-            fetch('/feedback/summarize_lesson/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    transcript_name: document.querySelector('#transcript-select').value
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    appendMessage('bot', data.summary);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson. Please try again later or contact support if the problem persists.');
-                });
+        switch(option) {
+            case 'Q&A':
+                appendMessage('bot', "Great! I'm ready to answer your questions about the lesson. What would you like to know?");
+                break;
+            case 'Summarize Lesson':
+                appendMessage('bot', "I'll summarize the lesson for you. Please give me a moment...");
+                summarizeLesson();
+                break;
+            case 'Request Assistance':
+                appendMessage('bot', "I'm here to help! Please describe the issue you're facing, and I'll make sure it's sent to our support team.");
+                break;
         }
     }
-
 
     function sendMessage() {
         const message = chatbotInput.value.trim();
@@ -128,31 +104,74 @@ document.addEventListener('DOMContentLoaded', function() {
             appendMessage('user', message);
             chatbotInput.value = '';
 
-            fetch('/feedback/chatbot/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    message: message,
-                    transcript_name: document.querySelector('#transcript-select') ? document.querySelector('#transcript-select').value : ''
+            if (currentAction === 'Request Assistance') {
+                fetch('/feedback/submit_assistance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ message: message })
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    appendMessage('bot', data.response);
+                    .then(response => response.json())
+                    .then(data => {
+                        appendMessage('bot', "Thank you for your request. Our support team will review it shortly.");
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error while submitting your request.');
+                    });
+            } else {
+                fetch('/feedback/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        action: currentAction,
+                        transcript_name: document.querySelector('#transcript-select') ? document.querySelector('#transcript-select').value : ''
+                    })
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    appendMessage('bot', 'Sorry, I encountered an error: ' + error.message);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        appendMessage('bot', data.response);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error: ' + error.message);
+                    });
+            }
         }
     }
 
+    function summarizeLesson() {
+        fetch('/feedback/summarize_lesson/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                transcript_name: document.querySelector('#transcript-select').value
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                appendMessage('bot', data.summary);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson. Please try again later or contact support if the problem persists.');
+            });
+    }
 
     function appendMessage(sender, content) {
         const messageElement = document.createElement('div');
@@ -190,11 +209,3 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 });
-
-
-function sanitizeAndFormatHTML(html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const sanitized = doc.body.textContent || "";
-    return sanitized.replace(/\n/g, '<br>').replace(/- /g, '• ');
-}
