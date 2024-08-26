@@ -124,18 +124,14 @@ def analyze_feedback_bot(request):
 
             client = authenticate_client()
 
-            # Sentiment analysis with opinion mining
+            # Perform sentiment analysis with opinion mining
             sentiment_response = client.analyze_sentiment(documents=[feedback_text], show_opinion_mining=True)[0]
 
-            # Key phrase extraction
+            # Perform key phrase extraction
             key_phrases_response = client.extract_key_phrases(documents=[feedback_text])[0]
 
             if sentiment_response.is_error or key_phrases_response.is_error:
                 return JsonResponse({'error': 'Error in sentiment analysis or key phrase extraction'}, status=500)
-
-            overall_sentiment = sentiment_response.sentiment
-            sentiment_scores = sentiment_response.confidence_scores
-            key_phrases = key_phrases_response.key_phrases
 
             # Process opinions
             opinions = []
@@ -157,37 +153,24 @@ def analyze_feedback_bot(request):
                         'assessments': assessments
                     })
 
+            # Prepare data for storage
             cosmos_data = {
                 'id': str(uuid.uuid4()),
                 'feedback_text': feedback_text,
-                'overall_sentiment': overall_sentiment,
-                'confidence_score_positive': sentiment_scores.positive,
-                'confidence_score_neutral': sentiment_scores.neutral,
-                'confidence_score_negative': sentiment_scores.negative,
-                'key_phrases': key_phrases,
+                'overall_sentiment': sentiment_response.sentiment,
+                'confidence_score_positive': sentiment_response.confidence_scores.positive,
+                'confidence_score_neutral': sentiment_response.confidence_scores.neutral,
+                'confidence_score_negative': sentiment_response.confidence_scores.negative,
+                'key_phrases': key_phrases_response.key_phrases,
                 'opinions': opinions,
                 'timestamp': datetime.utcnow().isoformat(),
                 'user_id': str(request.user.id) if request.user.is_authenticated else 'anonymous'
             }
 
+            # Store the feedback
             cosmos_db.store_feedback(cosmos_data)
 
-            response_data = {
-                'status': 'success',
-                'message': 'Feedback submitted and analyzed successfully',
-                'analysis': {
-                    'overall_sentiment': overall_sentiment,
-                    'confidence_scores': {
-                        'positive': sentiment_scores.positive,
-                        'neutral': sentiment_scores.neutral,
-                        'negative': sentiment_scores.negative
-                    },
-                    'key_phrases': key_phrases,
-                    'opinions': opinions
-                }
-            }
-
-            return JsonResponse(response_data)
+            return JsonResponse({'status': 'success', 'message': 'Feedback submitted successfully'})
 
         except Exception as e:
             logger.error(f"Error in analyze_feedback_bot: {str(e)}", exc_info=True)
