@@ -345,13 +345,12 @@ def summarize_lesson(request):
     if not transcript_name:
         return JsonResponse({'error': 'No transcript name provided'}, status=400)
 
-    transcript = download_file(transcript_name)
-
-    if transcript is None:
-        return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
-
     try:
-        summary = get_lesson_summary(transcript)
+        transcript = download_file(transcript_name)  # Implement this function to get the transcript content
+        if transcript is None:
+            return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
+
+        summary = get_lesson_summary(transcript)  # Implement this function to generate the summary
         return JsonResponse({'summary': summary})
     except Exception as e:
         logger.error(f"Error in summarize_lesson: {str(e)}")
@@ -365,8 +364,9 @@ Summarize the key concepts and ideas from the lesson content below, ensuring a c
    - Refer to the content as "this lesson" rather than "the video."
 
 2. **Clear and Structured Points:**
-   - Present the information as distinct bullet points.
-   - Ensure each point is concise and easy to understand.
+   - Present the information as distinct bullet points Make sure each bullet point starts on a new line. .
+   - Ensure each point is concise and easy to understand Make sure each bullet point starts on a new line. .
+   - **Make sure each bullet point starts on a new line.**
 
 3. **Focus on Key Concepts:**
    - Cover all major topics and subtopics mentioned in the content.
@@ -384,7 +384,18 @@ Summarize the key concepts and ideas from the lesson content below, ensuring a c
             {"role": "user", "content": transcript},
         ]
     )
-    return response['choices'][0]['message']['content']
+
+    # Get the summary content and format it
+    summary = response['choices'][0]['message']['content']
+
+    # Ensure every bullet point starts on a new line
+    formatted_summary = summary.replace("- ", "\n- ")
+
+    if not formatted_summary.startswith("\n"):
+        formatted_summary = "\n" + formatted_summary
+
+    return formatted_summary
+
 
 @csrf_exempt
 def submit_assistance(request):

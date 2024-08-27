@@ -190,6 +190,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function summarizeLesson() {
+        appendMessage('bot', "I'm summarizing the lesson for you. Please give me a moment...");
+
+        const transcript = document.getElementById('transcript-content').value;
+
         fetch('/feedback/summarize_lesson/', {
             method: 'POST',
             headers: {
@@ -197,10 +201,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({
-                transcript_name: document.querySelector('#transcript-select').value
+                transcript_name: transcript  // Make sure this matches your backend expectation
             })
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     throw new Error(data.error);
@@ -209,17 +218,18 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                appendMessage('bot', 'Sorry, I encountered an error while summarizing the lesson. Please try again later or contact support if the problem persists.');
+                appendMessage('bot', "Sorry, I encountered an error while summarizing the lesson: " + error.message);
             });
     }
+
 
     function appendMessage(sender, content) {
         const messageElement = document.createElement('div');
         messageElement.className = `mb-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
         messageElement.innerHTML = `
-        <div class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
-            ${sender === 'bot' ? content : escapeHtml(content)}
-        </div>
+        <span class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
+            ${content.replace(/\n/g, '<br>')}
+        </span>
     `;
         chatbotMessages.appendChild(messageElement);
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
