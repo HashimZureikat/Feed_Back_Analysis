@@ -28,21 +28,23 @@ from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import render
 
-
 logger = logging.getLogger(__name__)
 
 openai.api_key = config('OPENAI_API_KEY')
+
 
 def authenticate_client():
     key = settings.AZURE_SUBSCRIPTION_KEY
     endpoint = settings.AZURE_SENTIMENT_ENDPOINT
     return TextAnalyticsClient(endpoint=endpoint, credential=AzureKeyCredential(key))
 
+
 @login_required
 def home(request):
     theme = request.session.get('theme', 'light')
     language = request.COOKIES.get('language', 'en')
     return render(request, 'home.html', {'theme': theme, 'language': language})
+
 
 @csrf_exempt
 def analyze_feedback(request):
@@ -112,6 +114,7 @@ def analyze_feedback(request):
     else:
         return render(request, 'feedback/form.html')
 
+
 @csrf_exempt
 def analyze_feedback_bot(request):
     if request.method == 'POST':
@@ -178,10 +181,12 @@ def analyze_feedback_bot(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+
 class RegisterView(generic.CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('custom_login')
     template_name = 'feedback/registration/register.html'
+
 
 def custom_login(request):
     if request.method == 'POST':
@@ -195,6 +200,7 @@ def custom_login(request):
             messages.error(request, 'Invalid username or password.')
     return render(request, 'feedback/registration/login.html')
 
+
 @login_required
 def submit_feedback(request):
     if request.method == 'POST':
@@ -205,12 +211,14 @@ def submit_feedback(request):
             return redirect('feedback_list')
     return render(request, 'feedback/submit_feedback.html')
 
+
 @login_required
 @user_passes_test(lambda u: u.role in ['manager', 'admin'])
 def feedback_list(request):
     feedbacks = Feedback.objects.all()
     logger.info(f"Retrieved {feedbacks.count()} feedbacks")
     return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'manager' or u.role == 'admin')
@@ -223,6 +231,7 @@ def review_feedback(request, feedback_id):
         logger.info(f"Feedback {feedback_id} reviewed with status: {feedback.status}")
     return redirect('feedback_list')
 
+
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def approve_feedback(request, feedback_id):
@@ -233,6 +242,7 @@ def approve_feedback(request, feedback_id):
         feedback.save()
         logger.info(f"Feedback {feedback_id} approved with status: {feedback.status}")
     return redirect('feedback_list')
+
 
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -245,6 +255,7 @@ def reject_feedback(request, feedback_id):
         logger.info(f"Feedback {feedback_id} rejected with status: {feedback.status}")
     return redirect('feedback_list')
 
+
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def clear_feedback_history(request):
@@ -254,8 +265,10 @@ def clear_feedback_history(request):
         logger.info("All feedback history cleared")
         return redirect('feedback_list')
 
+
 def choice_page(request):
     return render(request, 'feedback/choice_page.html')
+
 
 @csrf_exempt
 @require_POST
@@ -265,6 +278,7 @@ def set_theme(request):
     messages.success(request, f'Theme set to {theme}.')
     return redirect('home')
 
+
 @csrf_exempt
 @require_POST
 def set_language(request):
@@ -273,6 +287,7 @@ def set_language(request):
     response.set_cookie('language', language, max_age=30 * 24 * 60 * 60)
     messages.success(request, f'Language set to {language}.')
     return response
+
 
 @csrf_exempt
 @require_POST
@@ -290,12 +305,14 @@ def upload_transcript(request):
     else:
         return JsonResponse({'error': 'Failed to upload file'}, status=500)
 
+
 def get_transcript(request, blob_name):
     try:
         transcript = download_file(blob_name)
         return JsonResponse({'transcript': transcript})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
 
 @csrf_exempt
 def chatbot(request):
@@ -314,6 +331,25 @@ def chatbot(request):
         response = get_chatbot_response(message, transcript)
         return JsonResponse({'response': response})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def get_chatbot_response(message, transcript):
+    system_message = (
+        "You are an AI assistant helping students understand educational content. "
+        "Provide concise and accurate answers based on the transcript content. "
+        "Format your responses with key points and brief explanations."
+    )
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": message},
+            {"role": "system", "content": transcript},
+        ]
+    )
+    return response['choices'][0]['message']['content']
+
 
 def get_chatbot_response(message, transcript):
     system_message = (
@@ -336,6 +372,7 @@ def get_chatbot_response(message, transcript):
     )
     return response['choices'][0]['message']['content']
 
+
 @csrf_exempt
 @require_POST
 def summarize_lesson(request):
@@ -355,6 +392,7 @@ def summarize_lesson(request):
     except Exception as e:
         logger.error(f"Error in summarize_lesson: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
 
 def get_lesson_summary(transcript):
     system_message = """
