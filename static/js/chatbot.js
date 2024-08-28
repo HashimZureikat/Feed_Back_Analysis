@@ -145,11 +145,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatSummary(summary) {
         const lines = summary.split('\n');
-        let formattedSummary = '<strong>Key Concepts in Data Science:</strong><br><br>';
+        let formattedSummary = '';
+        let isFirstLine = true;
+
         lines.forEach(line => {
             line = line.trim();
             if (line) {
-                if (line.startsWith('•')) {
+                if (isFirstLine && line.startsWith('Key Concepts in Data Science:')) {
+                    formattedSummary += `<strong>${line}</strong><br><br>`;
+                    isFirstLine = false;
+                } else if (line.startsWith('•')) {
                     // Main point, should be bold
                     formattedSummary += `<strong>${line}</strong><br>`;
                 } else if (line.startsWith('-')) {

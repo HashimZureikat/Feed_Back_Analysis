@@ -398,7 +398,7 @@ def get_lesson_summary(transcript):
     system_message = """
 Summarize the key concepts from the lesson content below, ensuring a clear and concise presentation. Follow these guidelines strictly:
 
-1. Start with "Key Concepts in Data Science:" as the main header (do not include this in the numbered list).
+1. Start with "Key Concepts in Data Science:" as the main header. Do not repeat this title.
 2. Present each main point as a bullet point starting with "•" (bullet character).
 3. Use "-" (hyphen) for all subpoints or additional details under main points.
 4. Never use bold formatting in your response; the client-side will handle formatting.
@@ -420,7 +420,7 @@ Key Concepts in Data Science:
 - Main Point 3:
 ... and so on
 
-Ensure strict adherence to this format, using "•" for main points and "-" for all subpoints.
+Ensure strict adherence to this format, using "•" for main points and "-" for all subpoints. Do not repeat the title "Key Concepts in Data Science:".
 """
 
     response = openai.ChatCompletion.create(
