@@ -133,9 +133,6 @@ def analyze_feedback_bot(request):
             # Perform key phrase extraction
             key_phrases_response = client.extract_key_phrases(documents=[feedback_text])[0]
 
-            if sentiment_response.is_error or key_phrases_response.is_error:
-                return JsonResponse({'error': 'Error in sentiment analysis or key phrase extraction'}, status=500)
-
             # Process opinions
             opinions = []
             for sentence in sentiment_response.sentences:
@@ -170,7 +167,7 @@ def analyze_feedback_bot(request):
                 'user_id': str(request.user.id) if request.user.is_authenticated else 'anonymous'
             }
 
-            # Store the feedback
+            # Store the feedback in Cosmos DB
             cosmos_db.store_feedback(cosmos_data)
 
             return JsonResponse({'status': 'success', 'message': 'Feedback submitted successfully'})
@@ -204,11 +201,70 @@ def custom_login(request):
 @login_required
 def submit_feedback(request):
     if request.method == 'POST':
-        text = request.POST.get('feedback')
-        if text:
-            feedback = Feedback.objects.create(user=request.user, text=text)
-            logger.info(f"Feedback {feedback.id} submitted by user {request.user.id}")
-            return redirect('feedback_list')
+        feedback_text = request.POST.get('feedback')
+        if feedback_text:
+            client = authenticate_client()
+            try:
+                # Sentiment analysis with opinion mining
+                sentiment_response = client.analyze_sentiment(documents=[feedback_text], show_opinion_mining=True)[0]
+
+                # Key phrase extraction
+                key_phrases_response = client.extract_key_phrases(documents=[feedback_text])[0]
+
+                # Process opinions
+                opinions = []
+                for sentence in sentiment_response.sentences:
+                    for mined_opinion in sentence.mined_opinions:
+                        target = mined_opinion.target
+                        assessments = [{
+                            'text': assessment.text,
+                            'sentiment': assessment.sentiment,
+                            'confidence_scores': {
+                                'positive': assessment.confidence_scores.positive,
+                                'neutral': assessment.confidence_scores.neutral,
+                                'negative': assessment.confidence_scores.negative
+                            }
+                        } for assessment in mined_opinion.assessments]
+                        opinions.append({
+                            'target': target.text,
+                            'sentiment': target.sentiment,
+                            'assessments': assessments
+                        })
+
+                # Prepare data for storage
+                feedback_data = {
+                    'id': str(uuid.uuid4()),
+                    'feedback_text': feedback_text,
+                    'overall_sentiment': sentiment_response.sentiment,
+                    'confidence_score_positive': sentiment_response.confidence_scores.positive,
+                    'confidence_score_neutral': sentiment_response.confidence_scores.neutral,
+                    'confidence_score_negative': sentiment_response.confidence_scores.negative,
+                    'key_phrases': key_phrases_response.key_phrases,
+                    'opinions': opinions,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'user_id': str(request.user.id)
+                }
+
+                # Store in Cosmos DB
+                cosmos_db.store_feedback(feedback_data)
+
+                # Create Feedback object in Django DB
+                feedback = Feedback.objects.create(
+                    user=request.user,
+                    text=feedback_text,
+                    sentiment=sentiment_response.sentiment,
+                    sentiment_scores=json.dumps(sentiment_response.confidence_scores.__dict__),
+                    key_phrases=json.dumps(key_phrases_response.key_phrases),
+                    opinions=json.dumps(opinions)
+                )
+
+                messages.success(request, 'Feedback submitted successfully.')
+                return redirect('feedback_list')
+            except Exception as e:
+                logger.error(f"Error in submit_feedback: {str(e)}", exc_info=True)
+                messages.error(request, 'An error occurred while processing your feedback. Please try again.')
+        else:
+            messages.error(request, 'Please provide feedback text.')
     return render(request, 'feedback/submit_feedback.html')
 
 
@@ -383,11 +439,11 @@ def summarize_lesson(request):
         return JsonResponse({'error': 'No transcript name provided'}, status=400)
 
     try:
-        transcript = download_file(transcript_name)  # Implement this function to get the transcript content
+        transcript = download_file(transcript_name)
         if transcript is None:
             return JsonResponse({'error': 'Failed to retrieve transcript'}, status=400)
 
-        summary = get_lesson_summary(transcript)  # Implement this function to generate the summary
+        summary = get_lesson_summary(transcript)
         return JsonResponse({'summary': summary})
     except Exception as e:
         logger.error(f"Error in summarize_lesson: {str(e)}")
@@ -439,13 +495,32 @@ def submit_assistance(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         message = data.get('message')
+        is_assistance_request = data.get('is_assistance_request', False)
 
         feedback = Feedback.objects.create(
             user=request.user if request.user.is_authenticated else None,
             text=message,
             status='submitted',
-            is_assistance_request=True
+            is_assistance_request=is_assistance_request
         )
+
+        if not is_assistance_request:
+            # Perform sentiment analysis using Azure API
+            client = authenticate_client()
+            sentiment_response = client.analyze_sentiment(documents=[message])[0]
+
+            # Save to Cosmos DB
+            cosmos_data = {
+                'id': str(uuid.uuid4()),
+                'feedback_text': message,
+                'sentiment': sentiment_response.sentiment,
+                'positive_score': sentiment_response.confidence_scores.positive,
+                'neutral_score': sentiment_response.confidence_scores.neutral,
+                'negative_score': sentiment_response.confidence_scores.negative,
+                'timestamp': datetime.utcnow().isoformat(),
+                'user_id': str(request.user.id) if request.user.is_authenticated else 'anonymous'
+            }
+            cosmos_db.store_feedback(cosmos_data)
 
         return JsonResponse({'status': 'success'})
 

@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="chatbot-options" class="p-4 flex justify-center space-x-4">
             <button id="qa-option" class="bg-blue-500 text-white px-4 py-2 rounded">Q&A</button>
             <button id="summarize-option" class="bg-green-500 text-white px-4 py-2 rounded">Summarize Lesson</button>
-            <button id="feedback-option" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit Feedback</button>
-            <button id="assistance-option" class="bg-red-500 text-white px-4 py-2 rounded">Request Assistance</button>
+            <button id="submit-feedback-option" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit Feedback</button>
+            <button id="request-assistance-option" class="bg-red-500 text-white px-4 py-2 rounded">Request Assistance</button>
         </div>
         <div id="chatbot-input-area" class="p-4 border-t hidden">
             <div class="flex">
@@ -46,11 +46,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatbotInputArea = document.getElementById('chatbot-input-area');
     const qaOption = document.getElementById('qa-option');
     const summarizeOption = document.getElementById('summarize-option');
-    const feedbackOption = document.getElementById('feedback-option');
-    const assistanceOption = document.getElementById('assistance-option');
+    const submitFeedbackOption = document.getElementById('submit-feedback-option');
+    const requestAssistanceOption = document.getElementById('request-assistance-option');
 
     let isFirstInteraction = true;
-    let currentMode = 'general';
+    let currentAction = '';
 
     chatbotToggle.addEventListener('click', () => {
         chatbotWindow.classList.toggle('hidden');
@@ -69,21 +69,10 @@ document.addEventListener('DOMContentLoaded', function() {
         chatbotWindow.classList.add('hidden');
     });
 
-    qaOption.addEventListener('click', () => {
-        handleOption('Q&A');
-    });
-
-    summarizeOption.addEventListener('click', () => {
-        handleOption('Summarize Lesson');
-    });
-
-    feedbackOption.addEventListener('click', () => {
-        handleOption('Submit Feedback');
-    });
-
-    assistanceOption.addEventListener('click', () => {
-        handleOption('Request Assistance');
-    });
+    qaOption.addEventListener('click', () => handleOption('Q&A'));
+    summarizeOption.addEventListener('click', () => handleOption('Summarize Lesson'));
+    submitFeedbackOption.addEventListener('click', () => handleOption('Submit Feedback'));
+    requestAssistanceOption.addEventListener('click', () => handleOption('Request Assistance'));
 
     chatbotSend.addEventListener('click', sendMessage);
     chatbotInput.addEventListener('keypress', (e) => {
@@ -97,22 +86,106 @@ document.addEventListener('DOMContentLoaded', function() {
         isFirstInteraction = false;
         chatbotOptions.classList.add('hidden');
         chatbotInputArea.classList.remove('hidden');
-        currentMode = option.toLowerCase().replace(' ', '_');
+        currentAction = option;
 
-        switch (option) {
+        switch(option) {
             case 'Q&A':
-                currentMode = 'q_a';
                 appendMessage('bot', "Great! I'm ready to answer your questions about the lesson. What would you like to know?");
                 break;
             case 'Summarize Lesson':
                 summarizeLesson();
                 break;
             case 'Submit Feedback':
-                appendMessage('bot', "I'd love to hear your thoughts about the course. Please type your feedback below.");
+                appendMessage('bot', "We value your feedback! Please type your feedback below, and I'll submit it for analysis.");
                 break;
             case 'Request Assistance':
-                appendMessage('bot', "I'm here to help. What specific issue are you facing with the course material?");
+                appendMessage('bot', "I'm here to help! Please describe the issue you're facing, and I'll make sure it's sent to our support team.");
                 break;
+        }
+    }
+
+    function sendMessage() {
+        const message = chatbotInput.value.trim();
+        if (message) {
+            appendMessage('user', message);
+            chatbotInput.value = '';
+
+            if (currentAction === 'Submit Feedback') {
+                fetch('/feedback/analyze_feedback_bot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ feedback: message })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        appendMessage('bot', "Thank you for your feedback. It has been submitted successfully.");
+                        // Return to main options
+                        setTimeout(() => {
+                            chatbotInputArea.classList.add('hidden');
+                            chatbotOptions.classList.remove('hidden');
+                            currentAction = '';
+                            appendMessage('bot', "Is there anything else I can help you with? Please choose an option:");
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error while submitting your feedback.');
+                    });
+            } else if (currentAction === 'Request Assistance') {
+                fetch('/feedback/submit_assistance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ message: message })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        appendMessage('bot', "Thank you for your request. Our support team will review it shortly.");
+                        // Return to main options
+                        setTimeout(() => {
+                            chatbotInputArea.classList.add('hidden');
+                            chatbotOptions.classList.remove('hidden');
+                            currentAction = '';
+                            appendMessage('bot', "Is there anything else I can help you with? Please choose an option:");
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error while submitting your request.');
+                    });
+            } else {
+                fetch('/feedback/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        action: currentAction,
+                        transcript_name: document.querySelector('#transcript-select') ? document.querySelector('#transcript-select').value : ''
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        appendMessage('bot', data.response);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        appendMessage('bot', 'Sorry, I encountered an error: ' + error.message);
+                    });
+            }
         }
     }
 
@@ -155,17 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     formattedSummary += `<strong>${line}</strong><br><br>`;
                     isFirstLine = false;
                 } else if (line.startsWith('•')) {
-                    // Main point, should be bold
                     formattedSummary += `<strong>${line}</strong><br>`;
                 } else if (line.startsWith('-')) {
-                    // Subpoint, should not be bold
                     formattedSummary += `${line}<br>`;
                 } else if (line.includes(':') && !line.startsWith('-')) {
-                    // Key-value pair not starting with '-', bold the key
                     const [key, value] = line.split(':');
                     formattedSummary += `<strong>${key.trim()}:</strong> ${value.trim()}<br>`;
                 } else {
-                    // Regular line, no bold
                     formattedSummary += `${line}<br>`;
                 }
             }
@@ -173,72 +242,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return formattedSummary;
     }
 
-
-    function sendMessage() {
-        const message = chatbotInput.value.trim();
-        if (message) {
-            appendMessage('user', message);
-            chatbotInput.value = '';
-
-            let endpoint = '/feedback/chatbot/';
-            let body = {
-                message: message,
-                transcript_name: document.querySelector('#transcript-select').value
-            };
-
-            if (currentMode === 'submit_feedback') {
-                endpoint = '/feedback/submit_assistance/';
-                body = { message: message };
-            }
-
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify(body)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    if (currentMode === 'submit_feedback') {
-                        appendMessage('bot', "Thank you for your feedback! It has been submitted successfully.");
-                    } else if (currentMode === 'q_a') {
-                        appendMessage('bot', data.response);
-                    } else {
-                        const formattedResponse = formatSummary(data.response);
-                        appendMessage('bot', formattedResponse);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    appendMessage('bot', 'Sorry, I encountered an error. Please try again later or contact support if the problem persists.');
-                });
-        }
-    }
-
     function appendMessage(sender, content) {
         const messageElement = document.createElement('div');
         messageElement.className = `mb-2 ${sender === 'user' ? 'text-right' : 'text-left'}`;
         messageElement.innerHTML = `
-        <div class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
-            ${sender === 'bot' ? content : escapeHtml(content)}
-        </div>
+        <span class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-100' : 'bg-gray-200'}">
+            ${content.replace(/\n/g, '<br>')}
+        </span>
     `;
         chatbotMessages.appendChild(messageElement);
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-    }
-
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     function getCookie(name) {
