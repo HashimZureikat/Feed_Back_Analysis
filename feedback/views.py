@@ -396,23 +396,31 @@ def summarize_lesson(request):
 
 def get_lesson_summary(transcript):
     system_message = """
-Summarize the key concepts and ideas from the lesson content below, ensuring a clear and concise presentation. Follow these guidelines:
+Summarize the key concepts from the lesson content below, ensuring a clear and concise presentation. Follow these guidelines strictly:
 
-1. **Use "This Lesson" Language:**
-   - Refer to the content as "this lesson" rather than "the video."
+1. Start with "Key Concepts in Data Science:" as the main header (do not include this in the numbered list).
+2. Present each main point as a bullet point starting with "•" (bullet character).
+3. Use "-" (hyphen) for all subpoints or additional details under main points.
+4. Never use bold formatting in your response; the client-side will handle formatting.
+5. Use concise language and focus on the most important information.
+6. Organize the summary in a logical flow, grouping related concepts together.
+7. Ensure each point is self-contained and easy to understand.
+8. Aim for 5-7 main points with relevant subpoints.
 
-2. **Clear and Structured Points:**
-   - Present the information as distinct bullet points Make sure each bullet point starts on a new line. .
-   - Ensure each point is concise and easy to understand Make sure each bullet point starts on a new line. .
-   - **Make sure each bullet point starts on a new line.**
+Example format:
+Key Concepts in Data Science:
 
-3. **Focus on Key Concepts:**
-   - Cover all major topics and subtopics mentioned in the content.
-   - Clearly differentiate between traditional methods and machine learning, emphasizing their roles and differences in business intelligence and data science.
+- Main Point 1:
+- Subpoint or detail
+- Another subpoint
 
-4. **Objective and Neutral Tone:**
-   - Avoid adopting any tone or perspective that suggests the content is part of a video or that it's being explained by an instructor.
-   - Keep the tone neutral and impersonal, focusing purely on the facts.
+- Main Point 2:
+- Subpoint or detail
+
+- Main Point 3:
+... and so on
+
+Ensure strict adherence to this format, using "•" for main points and "-" for all subpoints.
 """
 
     response = openai.ChatCompletion.create(
@@ -423,16 +431,7 @@ Summarize the key concepts and ideas from the lesson content below, ensuring a c
         ]
     )
 
-    # Get the summary content and format it
-    summary = response['choices'][0]['message']['content']
-
-    # Ensure every bullet point starts on a new line
-    formatted_summary = summary.replace("- ", "\n- ")
-
-    if not formatted_summary.startswith("\n"):
-        formatted_summary = "\n" + formatted_summary
-
-    return formatted_summary
+    return response['choices'][0]['message']['content']
 
 
 @csrf_exempt

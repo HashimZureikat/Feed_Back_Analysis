@@ -145,20 +145,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatSummary(summary) {
         const lines = summary.split('\n');
-        let formattedSummary = '<strong>Key Concepts in Data Science:</strong><br>';
+        let formattedSummary = '<strong>Key Concepts in Data Science:</strong><br><br>';
         lines.forEach(line => {
-            if (line.trim()) {
-                const [key, value] = line.split(':');
-                if (value) {
+            line = line.trim();
+            if (line) {
+                if (line.startsWith('•')) {
+                    // Main point, should be bold
+                    formattedSummary += `<strong>${line}</strong><br>`;
+                } else if (line.startsWith('-')) {
+                    // Subpoint, should not be bold
+                    formattedSummary += `${line}<br>`;
+                } else if (line.includes(':') && !line.startsWith('-')) {
+                    // Key-value pair not starting with '-', bold the key
+                    const [key, value] = line.split(':');
                     formattedSummary += `<strong>${key.trim()}:</strong> ${value.trim()}<br>`;
                 } else {
-                    formattedSummary += `<strong>${line.trim()}</strong><br>`;
+                    // Regular line, no bold
+                    formattedSummary += `${line}<br>`;
                 }
             }
         });
         return formattedSummary;
     }
-
 
 
     function sendMessage() {
