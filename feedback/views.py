@@ -19,7 +19,6 @@ import json
 import uuid
 from datetime import datetime
 import logging
-import openai
 from decouple import config
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
@@ -27,10 +26,10 @@ from .azure_storage import list_blobs
 from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import render
+import requests
 
 logger = logging.getLogger(__name__)
 
-openai.api_key = config('OPENAI_API_KEY')
 
 
 def authenticate_client():
@@ -389,6 +388,7 @@ def chatbot(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
+
 def get_chatbot_response(message, transcript):
     system_message = (
         "You are an AI assistant helping students understand educational content. "
@@ -396,37 +396,18 @@ def get_chatbot_response(message, transcript):
         "Format your responses with key points and brief explanations."
     )
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": message},
-            {"role": "system", "content": transcript},
-        ]
-    )
-    return response['choices'][0]['message']['content']
+    prompt = f"{system_message}\n\nTranscript: {transcript}\n\nUser: {message}\nAI:"
 
+    response = requests.post('http://localhost:11434/api/generate', json={
+        'model': 'llama2',
+        'prompt': prompt,
+        'stream': False
+    })
 
-def get_chatbot_response(message, transcript):
-    system_message = (
-        "You are an AI assistant helping students understand educational content. "
-        "When summarizing lessons, present information in a clear, concise manner using HTML formatting. "
-        "Use <ul> for unordered lists and <li> for list items. "
-        "Use <p> tags for paragraphs and <br> for line breaks. "
-        "Use <strong> for emphasis. "
-        "Focus on key topics, concepts, and takeaways without referencing any source material. "
-        "Provide standalone summaries that appear as direct overviews of the lesson content."
-    )
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": message},
-            {"role": "system", "content": transcript},
-        ]
-    )
-    return response['choices'][0]['message']['content']
+    if response.status_code == 200:
+        return response.json()['response']
+    else:
+        return "Sorry, I encountered an error while processing your request."
 
 
 @csrf_exempt
@@ -454,40 +435,30 @@ def get_lesson_summary(transcript):
     system_message = """
 Summarize the key concepts from the lesson content below, ensuring a clear and concise presentation. Follow these guidelines strictly:
 
-1. Start with "Key Concepts in Data Science:" as the main header. Do not repeat this title.
-2. Present each main point as a bullet point starting with "•" (bullet character).
-3. Use "-" (hyphen) for all subpoints or additional details under main points.
-4. Never use bold formatting in your response; the client-side will handle formatting.
-5. Use concise language and focus on the most important information.
-6. Organize the summary in a logical flow, grouping related concepts together.
-7. Ensure each point is self-contained and easy to understand.
-8. Aim for 5-7 main points with relevant subpoints.
+1. Start with "Key Concepts in Data Science:" as the main header.
+2. Do not use bullet points or numbering.
+3. Present the summary as a cohesive paragraph.
+4. Focus on the most important information and key takeaways.
+5. Aim for a summary of about 100-150 words.
 
-Example format:
-Key Concepts in Data Science:
-
-- Main Point 1:
-- Subpoint or detail
-- Another subpoint
-
-- Main Point 2:
-- Subpoint or detail
-
-- Main Point 3:
-... and so on
-
-Ensure strict adherence to this format, using "•" for main points and "-" for all subpoints. Do not repeat the title "Key Concepts in Data Science:".
+Ensure the summary is clear, concise, and easy to understand.
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": transcript},
-        ]
-    )
+    prompt = f"{system_message}\n\nTranscript: {transcript}\n\nSummary:"
 
-    return response['choices'][0]['message']['content']
+    response = requests.post('http://localhost:11434/api/generate', json={
+        'model': 'llama3.1',  # Changed from 'llama2' to 'llama3.1'
+        'prompt': prompt,
+        'stream': False
+    })
+
+    if response.status_code == 200:
+        summary = response.json()['response']
+        if not summary.startswith("Key Concepts in Data Science:"):
+            summary = "Key Concepts in Data Science:\n\n" + summary
+        return summary
+    else:
+        return "Sorry, I encountered an error while summarizing the lesson."
 
 
 @csrf_exempt
